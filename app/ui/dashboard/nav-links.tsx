@@ -21,8 +21,11 @@ const links = [
 ];
 
 export default function NavLinks() {
-  const pathname = usePathname();
-  const [loadingPathname, setLoadingPathname] = React.useState('');
+  const fullPathname = usePathname();
+  const pathname =
+    '/' + fullPathname.split('/').filter(Boolean).slice(0, 2).join('/');
+  const [pendingPathname, setPendingPathname] = React.useState('');
+
   return (
     <>
       {links.map((link) => {
@@ -32,12 +35,12 @@ export default function NavLinks() {
           <Link
             key={link.name}
             href={link.href}
-            onClick={() => setLoadingPathname(link.href)}
+            onClick={() => setPendingPathname(link.href)}
             className={clsx(
-              'flex h-[48px] grow items-center justify-center gap-2 rounded-md bg-gray-50 p-3 text-sm font-medium transition-all duration-100 ease-in-out hover:bg-sky-100 hover:text-blue-600 active:text-blue-300 md:flex-none md:justify-start md:p-2 md:px-3',
+              'animation flex h-[48px] grow items-center justify-center gap-2 rounded-md bg-gray-50 p-3 text-sm font-medium hover:bg-sky-100 hover:text-blue-600 active:text-blue-300 md:flex-none md:justify-start md:p-2 md:px-3',
               {
                 'animate-pulse bg-sky-50 text-blue-300':
-                  loadingPathname === link.href && !pathnameLoaded,
+                  pendingPathname === link.href && !pathnameLoaded,
                 'bg-sky-100 text-blue-600': pathnameLoaded,
               },
             )}

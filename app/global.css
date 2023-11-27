@@ -2,6 +2,12 @@
 @tailwind components;
 @tailwind utilities;
 
+@layer components {
+  .animation {
+    @apply transition-all duration-100 ease-in-out;
+  }
+}
+
 input[type='number'] {
   -moz-appearance: textfield;
   appearance: textfield;

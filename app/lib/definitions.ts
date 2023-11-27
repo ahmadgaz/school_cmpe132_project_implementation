@@ -2,21 +2,30 @@
 // It describes the shape of the data, and what data type each property should accept.
 // For simplicity of teaching, we're manually defining these types.
 // However, these types are generated automatically if you're using an ORM such as Prisma.
-export type User = {
+export type UserType = {
   id: string;
   name: string;
   email: string;
   password: string;
 };
 
-export type Customer = {
+export type CustomerType = {
   id: string;
   name: string;
   email: string;
   image_url: string;
 };
 
-export type Invoice = {
+export type CustomerFormStateType = {
+  errors?: {
+    customerId?: string[];
+    amount?: string[];
+    status?: string[];
+  };
+  message?: string | null;
+};
+
+export type InvoiceType = {
   id: string;
   customer_id: string;
   amount: number;
@@ -26,12 +35,12 @@ export type Invoice = {
   status: 'pending' | 'paid';
 };
 
-export type Revenue = {
+export type RevenueType = {
   month: string;
   revenue: number;
 };
 
-export type LatestInvoice = {
+export type LatestInvoiceType = {
   id: string;
   name: string;
   image_url: string;
@@ -40,11 +49,11 @@ export type LatestInvoice = {
 };
 
 // The database returns a number for amount, but we later format it to a string with the formatCurrency function
-export type LatestInvoiceRaw = Omit<LatestInvoice, 'amount'> & {
+export type LatestInvoiceRawType = Omit<LatestInvoiceType, 'amount'> & {
   amount: number;
 };
 
-export type InvoicesTable = {
+export type InvoicesTableType = {
   id: string;
   customer_id: string;
   name: string;
@@ -55,7 +64,7 @@ export type InvoicesTable = {
   status: 'pending' | 'paid';
 };
 
-export type CustomersTable = {
+export type CustomersTableType = {
   id: string;
   name: string;
   email: string;
@@ -65,7 +74,7 @@ export type CustomersTable = {
   total_paid: number;
 };
 
-export type FormattedCustomersTable = {
+export type FormattedCustomersTableType = {
   id: string;
   name: string;
   email: string;
@@ -75,12 +84,12 @@ export type FormattedCustomersTable = {
   total_paid: string;
 };
 
-export type CustomerField = {
+export type CustomerFieldType = {
   id: string;
   name: string;
 };
 
-export type InvoiceForm = {
+export type InvoiceFormType = {
   id: string;
   customer_id: string;
   amount: number;

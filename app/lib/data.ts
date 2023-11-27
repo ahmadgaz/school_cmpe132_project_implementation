@@ -1,27 +1,51 @@
 import { sql } from '@vercel/postgres';
 import {
-  CustomerField,
-  CustomersTable,
-  InvoiceForm,
-  InvoicesTable,
-  LatestInvoiceRaw,
-  User,
-  Revenue,
+  CustomerFieldType,
+  CustomersTableType,
+  InvoiceFormType,
+  InvoicesTableType,
+  LatestInvoiceRawType,
+  UserType,
+  RevenueType,
 } from './definitions';
 import { formatCurrency } from './utils';
+import { unstable_noStore as noStore } from 'next/cache';
+
+/*
+ * @vercel/postgres STRING LITERALS ARE SAFE SQL QUERIES!
+ * In Javascript, you can define a function that processes string literals
+ * These are called template literal tag functions.
+ * They are called with two arguments: an array of string literals and an array of substitutions.
+ * The array of string literals contains the template literal split by the values between each "${}".
+ * The array of substitutions contains the values between each "${}".
+ *
+ * For example:
+ * let name = "Jane"
+ * function greeting(strings, name){
+ * 	console.log(strings) // ["Testing", "this"]
+ * 	console.log(name) // "Jane"
+ * 	return `Hello, ${name}`
+ * }
+ * greeting`Testing ${name} this`
+ *
+ * The sql function is a template literal tag function.
+ * It is safe because it uses parameterized queries.
+ * Parameterized queries are a way to pass values to a SQL query without
+ * concatenating them into the query string.
+ * The database will always treat data as data and not as SQL code in a parameterized query.
+ */
 
 export async function fetchRevenue() {
-  // Add noStore() here prevent the response from being cached.
-  // This is equivalent to in fetch(..., {cache: 'no-store'}).
+  noStore();
 
   try {
     // Artificially delay a response for demo purposes.
     // Don't do this in production :)
 
-    // console.log('Fetching revenue data...');
-    // await new Promise((resolve) => setTimeout(resolve, 3000));
+    console.log('Fetching revenue data...');
+    await new Promise((resolve) => setTimeout(resolve, 5000));
 
-    const data = await sql<Revenue>`SELECT * FROM revenue`;
+    const data = await sql<RevenueType>`SELECT * FROM revenue`;
 
     // console.log('Data fetch completed after 3 seconds.');
 
@@ -33,8 +57,13 @@ export async function fetchRevenue() {
 }
 
 export async function fetchLatestInvoices() {
+  noStore();
+
   try {
-    const data = await sql<LatestInvoiceRaw>`
+    console.log('Fetching latest invoices...');
+    await new Promise((resolve) => setTimeout(resolve, 10000));
+
+    const data = await sql<LatestInvoiceRawType>`
       SELECT invoices.amount, customers.name, customers.image_url, customers.email, invoices.id
       FROM invoices
       JOIN customers ON invoices.customer_id = customers.id
@@ -53,7 +82,12 @@ export async function fetchLatestInvoices() {
 }
 
 export async function fetchCardData() {
+  noStore();
+
   try {
+    console.log('Fetching card data...');
+    await new Promise((resolve) => setTimeout(resolve, 15000));
+
     // You can probably combine these into a single SQL query
     // However, we are intentionally splitting them to demonstrate
     // how to initialize multiple queries in parallel with JS.
@@ -92,10 +126,12 @@ export async function fetchFilteredInvoices(
   query: string,
   currentPage: number,
 ) {
+  noStore();
+
   const offset = (currentPage - 1) * ITEMS_PER_PAGE;
 
   try {
-    const invoices = await sql<InvoicesTable>`
+    const invoices = await sql<InvoicesTableType>`
       SELECT
         invoices.id,
         invoices.amount,
@@ -124,6 +160,8 @@ export async function fetchFilteredInvoices(
 }
 
 export async function fetchInvoicesPages(query: string) {
+  noStore();
+
   try {
     const count = await sql`SELECT COUNT(*)
     FROM invoices
@@ -145,8 +183,10 @@ export async function fetchInvoicesPages(query: string) {
 }
 
 export async function fetchInvoiceById(id: string) {
+  noStore();
+
   try {
-    const data = await sql<InvoiceForm>`
+    const data = await sql<InvoiceFormType>`
       SELECT
         invoices.id,
         invoices.customer_id,
@@ -170,8 +210,10 @@ export async function fetchInvoiceById(id: string) {
 }
 
 export async function fetchCustomers() {
+  noStore();
+
   try {
-    const data = await sql<CustomerField>`
+    const data = await sql<CustomerFieldType>`
       SELECT
         id,
         name
@@ -188,8 +230,10 @@ export async function fetchCustomers() {
 }
 
 export async function fetchFilteredCustomers(query: string) {
+  noStore();
+
   try {
-    const data = await sql<CustomersTable>`
+    const data = await sql<CustomersTableType>`
 		SELECT
 		  customers.id,
 		  customers.name,
@@ -221,11 +265,27 @@ export async function fetchFilteredCustomers(query: string) {
 }
 
 export async function getUser(email: string) {
+  noStore();
+
   try {
     const user = await sql`SELECT * FROM users WHERE email=${email}`;
-    return user.rows[0] as User;
+    return user.rows[0] as UserType;
   } catch (error) {
     console.error('Failed to fetch user:', error);
     throw new Error('Failed to fetch user.');
   }
 }
+
+const api = {
+  fetchRevenue,
+  fetchLatestInvoices,
+  fetchCardData,
+  fetchFilteredInvoices,
+  fetchInvoicesPages,
+  fetchInvoiceById,
+  fetchCustomers,
+  fetchFilteredCustomers,
+  getUser,
+};
+
+export default api;
