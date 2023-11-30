@@ -1,11 +1,12 @@
-import { Inter, Lusitana } from 'next/font/google';
+import { Inter, Suez_One } from 'next/font/google';
 
 export const inter = Inter({
   subsets: ['latin'],
   display: 'block',
 });
-export const lusitana = Lusitana({
-  weight: '400',
+
+export const suezOne = Suez_One({
   subsets: ['latin'],
   display: 'block',
+  weight: '400',
 });

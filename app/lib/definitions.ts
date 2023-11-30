@@ -1,97 +1,68 @@
-// This file contains type definitions for your data.
-// It describes the shape of the data, and what data type each property should accept.
-// For simplicity of teaching, we're manually defining these types.
-// However, these types are generated automatically if you're using an ORM such as Prisma.
-export type UserType = {
-  id?: string;
-  name?: string;
-  email: string;
+export type UserAuthType = {
+  id: string;
+  username: string;
   password: string;
+  role: string;
 };
 
-export type CustomerType = {
+export type UserType = Omit<UserAuthType, 'password'> & {
+  logids: string[];
+  bookids: string[];
+  requestids: string[];
+};
+
+export type CreateBookType = Omit<BookType, 'id' | 'borrowed' | 'requested'>;
+
+export type BookType = {
   id: string;
-  name: string;
-  email: string;
-  image_url: string;
+  title: string;
+  author: string;
+  borrowerid?: string;
+  requestid?: string;
+  borrowername?: string;
 };
 
-export type CustomerFormStateType = {
-  errors?: {
-    customerId?: string[];
-    amount?: string[];
-    status?: string[];
-  };
-  message?: string | null;
-};
-
-export type InvoiceType = {
+export type LogType = {
   id: string;
-  customer_id: string;
-  amount: number;
-  date: string;
-  // In TypeScript, this is called a string union type.
-  // It means that the "status" property can only be one of the two strings: 'pending' or 'paid'.
-  status: 'pending' | 'paid';
+  createdat: Date;
+  permission: string;
+  userid: string;
 };
 
-export type RevenueType = {
-  month: string;
-  revenue: number;
-};
-
-export type LatestInvoiceType = {
+export type RequestType = {
   id: string;
-  name: string;
-  image_url: string;
-  email: string;
-  amount: string;
+  requestname: 'REQUEST_BOOK' | 'RETURN_BOOK';
+  userid: string;
+  bookid: string;
 };
 
-// The database returns a number for amount, but we later format it to a string with the formatCurrency function
-export type LatestInvoiceRawType = Omit<LatestInvoiceType, 'amount'> & {
-  amount: number;
+export type WritepermissionnameType =
+  | 'DELETE_BOOK' // ADMIN
+  | 'UPDATE_BOOK' // ADMIN
+  | 'CREATE_BOOK' // ADMIN
+  | 'CHECKIN_BOOK' // ADMIN
+  | 'CHECKOUT_BOOK' // ADMIN
+  | 'ADD_USER' // ADMIN
+  | 'DELETE_USER' // ADMIN
+  | 'RETURN_BOOK' // USER & ADMIN
+  | 'REVOKE_RETURN_BOOK' // USER & ADMIN
+  | 'REQUEST_BOOK' // USER & ADMIN
+  | 'REVOKE_REQUEST_BOOK' // USER & ADMIN
+  | 'UPDATE_PROFILE' // USER
+  | 'DELETE_PROFILE' // USER
+  | 'REGISTERED'; // USER -> Technically Guest, but this permission only gets logged when a Guest registers.
+export type ReadpermissionnameType =
+  | 'VIEW_LOGS' // ADMIN
+  | 'VIEW_USER'; // ADMIN
+
+export type PermissionType = {
+  permissionname: WritepermissionnameType | ReadpermissionnameType;
+  roles: string[];
+  logids?: string[];
 };
 
-export type InvoicesTableType = {
-  id: string;
-  customer_id: string;
-  name: string;
-  email: string;
-  image_url: string;
-  date: string;
-  amount: number;
-  status: 'pending' | 'paid';
-};
-
-export type CustomersTableType = {
-  id: string;
-  name: string;
-  email: string;
-  image_url: string;
-  total_invoices: number;
-  total_pending: number;
-  total_paid: number;
-};
-
-export type FormattedCustomersTableType = {
-  id: string;
-  name: string;
-  email: string;
-  image_url: string;
-  total_invoices: number;
-  total_pending: string;
-  total_paid: string;
-};
-
-export type CustomerFieldType = {
-  id: string;
-  name: string;
-};
-
-export type InvoiceFormType = {
-  id: string;
-  customer_id: string;
-  amount: number;
-  status: 'pending' | 'paid';
+export type RoleType = {
+  rolename: 'ADMIN' | 'USER';
+  permissions: string[];
+  userids?: string[];
 };

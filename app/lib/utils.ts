@@ -1,39 +1,39 @@
-import { RevenueType } from './definitions';
+// import { RevenueType } from './definitions';
 
-export const formatCurrency = (amount: number) => {
-  return (amount / 100).toLocaleString('en-US', {
-    style: 'currency',
-    currency: 'USD',
-  });
-};
+// export const formatCurrency = (amount: number) => {
+//   return (amount / 100).toLocaleString('en-US', {
+//     style: 'currency',
+//     currency: 'USD',
+//   });
+// };
 
-export const formatDateToLocal = (
-  dateStr: string,
-  locale: string = 'en-US',
-) => {
-  const date = new Date(dateStr);
-  const options: Intl.DateTimeFormatOptions = {
-    day: 'numeric',
-    month: 'short',
-    year: 'numeric',
-  };
-  const formatter = new Intl.DateTimeFormat(locale, options);
-  return formatter.format(date);
-};
+// export const formatDateToLocal = (
+//   dateStr: string,
+//   locale: string = 'en-US',
+// ) => {
+//   const date = new Date(dateStr);
+//   const options: Intl.DateTimeFormatOptions = {
+//     day: 'numeric',
+//     month: 'short',
+//     year: 'numeric',
+//   };
+//   const formatter = new Intl.DateTimeFormat(locale, options);
+//   return formatter.format(date);
+// };
 
-export const generateYAxis = (revenue: RevenueType[]) => {
-  // Calculate what labels we need to display on the y-axis
-  // based on highest record and in 1000s
-  const yAxisLabels = [];
-  const highestRecord = Math.max(...revenue.map((month) => month.revenue));
-  const topLabel = Math.ceil(highestRecord / 1000) * 1000;
+// export const generateYAxis = (revenue: RevenueType[]) => {
+//   // Calculate what labels we need to display on the y-axis
+//   // based on highest record and in 1000s
+//   const yAxisLabels = [];
+//   const highestRecord = Math.max(...revenue.map((month) => month.revenue));
+//   const topLabel = Math.ceil(highestRecord / 1000) * 1000;
 
-  for (let i = topLabel; i >= 0; i -= 1000) {
-    yAxisLabels.push(`$${i / 1000}K`);
-  }
+//   for (let i = topLabel; i >= 0; i -= 1000) {
+//     yAxisLabels.push(`$${i / 1000}K`);
+//   }
 
-  return { yAxisLabels, topLabel };
-};
+//   return { yAxisLabels, topLabel };
+// };
 
 export const generatePagination = (currentPage: number, totalPages: number) => {
   // If the total number of pages is 7 or less,
@@ -67,3 +67,15 @@ export const generatePagination = (currentPage: number, totalPages: number) => {
     totalPages,
   ];
 };
+
+export default async function Await<T>({
+  promise,
+  children,
+}: {
+  promise: Promise<T>;
+  children: (value: T) => JSX.Element;
+}) {
+  let data = await promise;
+
+  return children(data);
+}

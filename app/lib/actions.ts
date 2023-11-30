@@ -1,11 +1,23 @@
 'use server';
 
 import { z } from 'zod';
-import { sql } from '@vercel/postgres';
 import { revalidatePath } from 'next/cache';
 import { redirect } from 'next/navigation';
-import { CustomerFormStateType, UserType } from './definitions';
+import { BookType, UserAuthType, UserType } from './definitions';
+import { unstable_noStore as noStore } from 'next/cache';
 import { signIn } from '@/auth';
+import { cookies } from 'next/headers';
+import { jwtVerify } from 'jose';
+import queries from './queries';
+
+const UserAuthSchema = z.object({
+  id: z.string().uuid(),
+  username: z.string().min(1).max(255),
+  password: z.string().min(1).max(255),
+  role: z.union([z.literal('USER'), z.literal('ADMIN')]),
+});
+
+const UserAuth = UserAuthSchema.omit({ id: true, role: true });
 
 export async function authenticate(
   prevState: string | undefined,
@@ -13,101 +25,188 @@ export async function authenticate(
 ) {
   let token;
   try {
-    token = await signIn(Object.fromEntries(formData) as UserType);
+    const validatedFields = UserAuth.safeParse(Object.fromEntries(formData));
+    if (!validatedFields.success)
+      throw new Error(
+        Object.values(validatedFields.error.flatten().fieldErrors).join('\n'),
+      );
+
+    token = await signIn(validatedFields.data as UserAuthType);
   } catch (error) {
     console.error(error);
-    return (error as Error).message ?? 'Failed to Sign In';
+    return (error as Error).message ?? 'Failed to sign in.';
   }
-  redirect('/dashboard/?token=' + token);
+  redirect('/book/?token=' + token);
 }
 
-const FormSchema = z.object({
-  id: z.string(),
-  customerId: z.string({
-    invalid_type_error: 'Please select a customer',
-  }),
-  amount: z.coerce
-    .number()
-    .gt(0, { message: 'Please enter an amount greater than $0.' }),
-  status: z.enum(['pending', 'paid'], {
-    invalid_type_error: 'Please select an invoice status.',
-  }),
-  date: z.string(),
+async function queryHelper<Arguments, ReturnValue>(queries: {
+  args: Arguments;
+  guestQuery?: (args: Arguments) => Promise<ReturnValue>;
+  userQuery?: (args: Arguments, user: UserType) => Promise<ReturnValue>;
+  adminQuery?: (args: Arguments, user: UserType) => Promise<ReturnValue>;
+}) {
+  try {
+    const token = cookies().get('_session')?.value;
+
+    if (!token)
+      if (typeof queries.guestQuery === 'function')
+        return queries.guestQuery(queries.args);
+      else throw new Error('You must be signed in to perform this action.');
+
+    const verified = (
+      await jwtVerify(
+        String(token),
+        new TextEncoder().encode(process.env.AUTH_SECRET),
+      )
+    ).payload;
+
+    if (!verified) throw new Error('Invalid token.');
+
+    const user = {
+      id: verified.id,
+      username: verified.username,
+      role: verified.role,
+    } as UserType;
+
+    if (user.role === 'USER')
+      if (typeof queries.userQuery === 'function')
+        return queries.userQuery(queries.args, user);
+      else throw new Error('You are not authorized to perform this action.');
+
+    if (user.role === 'ADMIN')
+      if (typeof queries.adminQuery === 'function')
+        return queries.adminQuery(queries.args, user);
+      else throw new Error('You are not authorized to perform this action.');
+    else throw new Error('Invalid role.');
+  } catch (error) {
+    console.error(error);
+    throw error as Error;
+  }
+}
+
+const BookSchema = z.object({
+  id: z.string().uuid(),
+  title: z.string().min(1).max(255),
+  author: z.string().min(1).max(255),
+  borrowerid: z.string().uuid().nullable(),
+  requestid: z.string().uuid().nullable(),
 });
 
-const CreateInvoice = FormSchema.omit({ id: true, date: true });
+const CreateBook = BookSchema.omit({
+  id: true,
+  borrowerid: true,
+  requestid: true,
+});
 
-export async function createInvoice(
-  prevState: CustomerFormStateType,
+export async function createBook(
+  prevState: string | undefined,
   formData: FormData,
 ) {
-  // Validate form fields using Zod
-  const validatedFields = CreateInvoice.safeParse({
-    customerId: formData.get('customerId'),
-    amount: formData.get('amount'),
-    status: formData.get('status'),
-  });
-
-  // If form validation fails, return errors early. Otherwise, continue.
-  if (!validatedFields.success) {
-    return {
-      errors: validatedFields.error.flatten().fieldErrors,
-      message: 'Missing Fields. Failed to Create Invoice.',
-    };
-  }
-
-  const { customerId, amount, status } = validatedFields.data;
-  const amountInCents = amount * 100;
-  const date = new Date().toISOString().split('T')[0];
-
-  // Insert data into the database
+  noStore();
   try {
-    await sql`
-      INSERT INTO invoices (customer_id, amount, status, date)
-      VALUES (${customerId}, ${amountInCents}, ${status}, ${date})
-    `;
+    const validatedFields = CreateBook.safeParse(Object.fromEntries(formData));
+    if (!validatedFields.success)
+      throw new Error(
+        Object.values(validatedFields.error.flatten().fieldErrors).join('\n'),
+      );
+
+    await queryHelper<{ validatedFields: BookType }, void>({
+      args: { validatedFields: validatedFields.data as BookType },
+      adminQuery: async function (args, user) {
+        await queries.admin.createBook(args.validatedFields, user);
+      },
+    });
   } catch (error) {
-    // If a database error occurs, return a more specific error.
-    return {
-      message: 'Database Error: Failed to Create Invoice.',
-    };
+    console.error('Database Error:', error);
+    return (error as Error).message ?? 'Failed to add book.';
   }
-
-  // Revalidate the cache for the invoices page and redirect the user.
-  revalidatePath('/dashboard/invoices');
-  redirect('/dashboard/invoices');
+  revalidatePath('/logs');
+  revalidatePath('/catalog');
+  redirect('/catalog');
 }
 
-const UpdateInvoice = FormSchema.omit({ id: true, date: true });
+const UpdateBook = BookSchema.omit({
+  borrowerid: true,
+  requestid: true,
+});
 
-export async function updateInvoice(id: string, formData: FormData) {
-  const { customerId, amount, status } = UpdateInvoice.parse({
-    customerId: formData.get('customerId'),
-    amount: formData.get('amount'),
-    status: formData.get('status'),
-  });
-
-  const amountInCents = amount * 100;
-
-  await sql`
-        UPDATE invoices
-        SET customer_id = ${customerId}, amount = ${amountInCents}, status = ${status}
-        WHERE id = ${id}
-    `;
-
-  revalidatePath('/dashboard/invoices');
-  redirect('/dashboard/invoices');
-}
-
-export async function deleteInvoice(id: string) {
-  throw new Error('Failed to Delete Invoice');
-
-  // Unreachable code block
+export async function updateBook(
+  prevState: string | undefined,
+  formData: FormData,
+) {
+  noStore();
   try {
-    await sql`DELETE FROM invoices WHERE id = ${id}`;
-    revalidatePath('/dashboard/invoices');
-    return { message: 'Deleted Invoice' };
+    const validatedFields = UpdateBook.safeParse(Object.fromEntries(formData));
+    if (!validatedFields.success)
+      throw new Error(
+        Object.values(validatedFields.error.flatten().fieldErrors).join('\n'),
+      );
+
+    await queryHelper<{ validatedFields: BookType }, void>({
+      args: { validatedFields: validatedFields.data as BookType },
+      adminQuery: async function (args, user) {
+        await queries.admin.editBook(args.validatedFields, user);
+      },
+    });
   } catch (error) {
-    return { message: 'Database Error: Failed to Delete Invoice' };
+    console.error('Database Error:', error);
+    return (error as Error).message ?? 'Failed to add book.';
   }
+  revalidatePath('/logs');
+  revalidatePath('/catalog');
+  redirect('/catalog');
 }
+
+export async function saveRequest(book: BookType) {
+  noStore();
+  try {
+    await queryHelper<{ book: BookType }, void>({
+      args: { book },
+      userQuery: async function (args, user) {
+        await queries.userOrAdmin.saveRequest(args.book, user);
+      },
+      adminQuery: async function (args, user) {
+        await queries.userOrAdmin.saveRequest(args.book, user);
+      },
+    });
+  } catch (error) {
+    console.error(error);
+    return (error as Error).message ?? 'Failed to save request.';
+  }
+  revalidatePath('/logs');
+  revalidatePath('/catalog');
+}
+
+// const UpdateInvoice = FormSchema.omit({ id: true, date: true });
+
+// export async function updateInvoice(id: string, formData: FormData) {
+//   const { customerId, amount, status } = UpdateInvoice.parse({
+//     customerId: formData.get('customerId'),
+//     amount: formData.get('amount'),
+//     status: formData.get('status'),
+//   });
+
+//   const amountInCents = amount * 100;
+
+//   await sql`
+//         UPDATE invoices
+//         SET customer_id = ${customerId}, amount = ${amountInCents}, status = ${status}
+//         WHERE id = ${id}
+//     `;
+
+//   revalidatePath('/dashboard/invoices');
+//   redirect('/dashboard/invoices');
+// }
+
+// export async function deleteInvoice(id: string) {
+//   throw new Error('Failed to Delete Invoice');
+
+//   // Unreachable code block
+//   try {
+//     await sql`DELETE FROM invoices WHERE id = ${id}`;
+//     revalidatePath('/dashboard/invoices');
+//     return { message: 'Deleted Invoice' };
+//   } catch (error) {
+//     return { message: 'Database Error: Failed to Delete Invoice' };
+//   }
+// }

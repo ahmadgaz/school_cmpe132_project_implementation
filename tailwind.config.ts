@@ -8,14 +8,33 @@ const config: Config = {
   ],
   theme: {
     extend: {
-      gridTemplateColumns: {
-        '13': 'repeat(13, minmax(0, 1fr))',
-      },
       colors: {
-        blue: {
-          400: '#2589FE',
-          500: '#0070F3',
-          600: '#2F6FEB',
+        primary: {
+          900: '#E5A941FF',
+          800: '#E5A941CC',
+          700: '#E5A941B3',
+          600: '#E5A94199',
+          500: '#E5A94180',
+          400: '#E5A94166',
+          300: '#E5A9414D',
+          200: '#E5A94133',
+          100: '#E5A9411A',
+        },
+        text: {
+          black: '#302F37',
+          gray: '#97979B',
+        },
+        background: {
+          light: '#FFFFFF',
+        },
+        input: {
+          light: '#F5F5F5',
+        },
+        accent: {
+          light: '#E5E5E5',
+        },
+        danger: {
+          light: '#FF374B',
         },
       },
       keyframes: {

@@ -4,24 +4,27 @@ import { jwtVerify } from 'jose';
 export default async function auth(request: NextRequest) {
   try {
     const isSigningOut = request.nextUrl.pathname.startsWith('/signout');
-
     if (isSigningOut) {
       const response = NextResponse.redirect(new URL('/', request.nextUrl));
       response.cookies.delete('_session');
       return response;
     }
-
     let token = request.cookies.get('_session')?.value;
     const isLoggingInToken = request.nextUrl.searchParams.get('token');
-
     if (isLoggingInToken) token = isLoggingInToken;
-
-    const isOnDashboard = request.nextUrl.pathname.startsWith('/dashboard');
-
-    if (!token && isOnDashboard)
+    const isOnGuestRoutes =
+      request.nextUrl.pathname === '/' ||
+      request.nextUrl.pathname.startsWith('/login') ||
+      request.nextUrl.pathname.startsWith('/signup');
+    const isOnProtectedRoute =
+      request.nextUrl.pathname.startsWith('/books') ||
+      request.nextUrl.pathname.startsWith('/profile') ||
+      request.nextUrl.pathname.startsWith('/users') ||
+      request.nextUrl.pathname.startsWith('/requests') ||
+      request.nextUrl.pathname.startsWith('/logs');
+    if (!token && isOnProtectedRoute)
       return Response.redirect(new URL('/login', request.nextUrl));
-    if (!token && !isOnDashboard) return; // Continue to next URL
-
+    if (!token && !isOnProtectedRoute) return; // Continue to next URL
     // Verify token
     const verified = (
       await jwtVerify(
@@ -29,10 +32,9 @@ export default async function auth(request: NextRequest) {
         new TextEncoder().encode(process.env.AUTH_SECRET),
       )
     ).payload;
-
-    if (!verified && isOnDashboard)
+    if (!verified && isOnProtectedRoute)
       return Response.redirect(new URL('/login', request.nextUrl));
-    if (!verified && !isOnDashboard) return; // Continue to next URL
+    if (!verified && !isOnProtectedRoute) return; // Continue to next URL
     if (verified && isLoggingInToken) {
       const response = NextResponse.next();
       response.cookies.set({
@@ -44,9 +46,8 @@ export default async function auth(request: NextRequest) {
         sameSite: 'lax',
       });
       return response;
-    } else if (verified && !isOnDashboard)
-      return Response.redirect(new URL('/dashboard', request.nextUrl));
-
+    } else if (verified && isOnGuestRoutes)
+      return Response.redirect(new URL('/books', request.nextUrl));
     return; // Continue to next URL
   } catch (error) {
     const url = new URL('/login', request.nextUrl);
@@ -56,6 +57,5 @@ export default async function auth(request: NextRequest) {
 }
 
 export const config = {
-  // https://nextjs.org/docs/app/building-your-application/routing/middleware#matcher
   matcher: ['/((?!api|_next/static|_next/image|.*\\.png$).*)'],
 };

@@ -6,6 +6,30 @@
   .animation {
     @apply transition-all duration-100 ease-in-out;
   }
+  .logo-color {
+    background: -webkit-linear-gradient(44deg, #d69b34 10.2%, #e8be76 28.24%);
+    background-clip: text;
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+  }
+  .button-primary {
+    @apply animation text-background-light bg-primary-900  disabled:bg-primary-200 disabled:text-primary-500 hover:bg-primary-200 hover:text-primary-900 active:text-primary-300 flex h-[40px] items-center justify-center gap-2 rounded-xl px-5 text-[16px] font-bold;
+  }
+  .button-secondary {
+    @apply animation text-primary-900 border-accent-light hover:bg-primary-200 hover:text-primary-900 active:text-primary-300 flex h-[40px] items-center justify-center gap-2 rounded-xl border-[1px] px-5 text-[16px] font-bold hover:border-transparent active:border-transparent;
+  }
+  .button-tertiary {
+    @apply animation text-background-light bg-text-black hover:text-background-light flex h-[40px] items-center justify-center gap-2 rounded-xl px-5 text-[16px] font-bold hover:bg-slate-500 active:border-transparent active:bg-slate-300;
+  }
+  .input {
+    @apply placeholder:text-text-gray bg-input-light block w-full rounded-xl py-[9px] pl-4 text-sm outline-2;
+  }
+  .label {
+    @apply text-text-gray mt-5 block pb-3 text-xs font-medium;
+  }
+  .max-width {
+    @apply w-full max-w-[1048px];
+  }
 }
 
 input[type='number'] {
