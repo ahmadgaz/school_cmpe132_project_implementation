@@ -33,7 +33,7 @@ export default async function Page({
       <header className="max-width flex items-center justify-between gap-40 pt-6 max-lg:justify-center">
         <div className="flex w-full flex-col gap-5 ">
           <div className="flex justify-between">
-            <h1 className="text-text-black text-[28px] font-semibold max-lg:text-center">
+            <h1 className="text-[28px] font-semibold text-text-black max-lg:text-center">
               Catalog
             </h1>
             {role === 'ADMIN' && (
@@ -53,9 +53,9 @@ export default async function Page({
       {/* Results */}
       <section
         key={Math.random()}
-        className="border-accent-light max-width flex items-center justify-between gap-40 rounded-[32px] border-[1px] px-[84px] py-[56px]"
+        className="max-width flex items-center justify-between gap-40 rounded-[32px] border-[1px] border-accent-light px-[84px] py-[56px]"
       >
-        <div className="border-accent-light flex w-full flex-col gap-6 border-b-[1px] max-lg:items-center">
+        <div className="flex w-full flex-col gap-6 border-b-[1px] border-accent-light max-lg:items-center">
           <React.Suspense fallback={<TableSkeleton />}>
             <Await promise={promise}>
               {(catalog) => (
@@ -68,12 +68,13 @@ export default async function Page({
                         book={book}
                         user={catalog?.user}
                         token={token}
+                        role={role}
                       />
                     ))}
                   </PathnameState>
                   {!catalog?.books.length && (
                     <li className="flex h-[85px] flex-col justify-center gap-1 pt-3">
-                      <h1 className="text-text-gray h-8 text-center text-[24px] font-semibold italic">
+                      <h1 className="h-8 text-center text-[24px] font-semibold italic text-text-gray">
                         Sorry, no books to show {':('}
                       </h1>
                     </li>

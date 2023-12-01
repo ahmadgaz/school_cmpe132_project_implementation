@@ -16,8 +16,8 @@ You can access the website at [https://school-cmpe132-project-implementation.ver
 
 ## Local Setup
 
-1. Clone the repository: `git clone <repository-url>`.
-2. Navigate to the project directory: `cd <project-directory>`.
+1. Clone the repository: `git clone https://github.com/ahmadgaz/school_cmpe132_project_implementation.git`.
+2. Navigate to the project directory: `cd school_cmpe132_project_implementation`.
 3. Install dependencies: `npm install`.
 4. Set up your PostgreSQL database on vercel and note down the connection details.
 5. Create a `.env` file in the root of your project and add your database connection string as `DATABASE_URL`.
