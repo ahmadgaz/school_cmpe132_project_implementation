@@ -18,6 +18,7 @@ export default async function auth(request: NextRequest) {
       request.nextUrl.pathname.startsWith('/books') ||
       request.nextUrl.pathname.startsWith('/profile');
     const isOnProtectedAdminRoutes =
+      request.nextUrl.pathname.startsWith('/catalog/') ||
       request.nextUrl.pathname.startsWith('/users') ||
       request.nextUrl.pathname.startsWith('/requests') ||
       request.nextUrl.pathname.startsWith('/logs');

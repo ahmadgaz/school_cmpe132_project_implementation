@@ -24,6 +24,7 @@ export default async function Page({
   };
 }) {
   const token = cookies().get('_session')?.value;
+  const role = await api.fetchRole(token);
   const promise: Promise<{ books: BookType[]; user?: UserType }> =
     api.fetchCatalog(searchParams?.query, Number(searchParams?.page), token);
   return (
@@ -35,13 +36,15 @@ export default async function Page({
             <h1 className="text-text-black text-[28px] font-semibold max-lg:text-center">
               Catalog
             </h1>
-            <PathnameState>
-              <NavButton
-                className="button-primary w-fit"
-                name="Add Book"
-                href="/catalog/add"
-              />
-            </PathnameState>
+            {role === 'ADMIN' && (
+              <PathnameState>
+                <NavButton
+                  className="button-primary w-fit"
+                  name="Add Book"
+                  href="/catalog/add"
+                />
+              </PathnameState>
+            )}
           </div>
           <Search placeholder="Search catalog..." />
         </div>
