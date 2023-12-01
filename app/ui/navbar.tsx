@@ -33,8 +33,8 @@ const links = [
   },
 ];
 
-export default async function Navbar() {
-  const role = await api.fetchRole();
+export default async function Navbar({ token }: { token: string }) {
+  const role = await api.fetchRole(token);
   return (
     <nav className="max-width flex items-center justify-between px-2 max-lg:flex-col">
       <Link className="min-h-[50px] w-fit" href="/">

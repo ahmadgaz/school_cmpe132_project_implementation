@@ -5,7 +5,7 @@ import React from 'react';
 import { LoadingSpinner } from '@/app/ui/skeletons';
 import { TrashIcon } from '@heroicons/react/24/outline';
 
-export function DeleteButton({ id }: { id: string }) {
+export function DeleteButton({ id, token }: { id: string; token?: string }) {
   const [loading, setLoading] = React.useState<boolean>(false);
   const [error, setError] = React.useState<string>('');
 
@@ -13,7 +13,7 @@ export function DeleteButton({ id }: { id: string }) {
     setLoading(true);
     setError('');
     try {
-      await deleteUser(id);
+      await deleteUser(id, token);
     } catch (error) {
       console.error(error);
       setError(String(error) || 'Failed to delete.');

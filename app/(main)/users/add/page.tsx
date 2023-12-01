@@ -2,12 +2,14 @@ import { Metadata } from 'next';
 import React from 'react';
 import Breadcrumbs from '@/app/ui/breadcrumbs';
 import Form from '@/app/ui/users/add-form';
+import { cookies } from 'next/headers';
 
 export const metadata: Metadata = {
   title: 'Add User',
 };
 
 export default async function Page() {
+  const token = cookies().get('_session')?.value;
   return (
     <main className="relative flex flex-col items-center gap-5 px-3 pb-10">
       {/* Header */}
@@ -31,7 +33,7 @@ export default async function Page() {
       {/* Form */}
       <section className="border-accent-light max-width flex items-center justify-between gap-40 rounded-[32px] border-[1px] px-[42px] py-[28px]">
         <div className="flex w-full flex-col gap-6">
-          <Form />
+          <Form token={token} />
         </div>
       </section>
     </main>

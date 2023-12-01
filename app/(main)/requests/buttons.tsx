@@ -5,7 +5,13 @@ import { acceptRequest, denyRequest } from '@/lib/actions';
 import React from 'react';
 import { LoadingSpinner } from '@/app/ui/skeletons';
 
-export function AcceptButton({ request }: { request: RequestType }) {
+export function AcceptButton({
+  request,
+  token,
+}: {
+  request: RequestType;
+  token?: string;
+}) {
   const [loading, setLoading] = React.useState<boolean>(false);
   const [error, setError] = React.useState<string>('');
 
@@ -13,7 +19,7 @@ export function AcceptButton({ request }: { request: RequestType }) {
     setLoading(true);
     setError('');
     try {
-      await acceptRequest(request);
+      await acceptRequest(request, token);
     } catch (error) {
       console.error(error);
       setError((error as Error).message ?? 'Failed to sign in.');
@@ -43,7 +49,13 @@ export function AcceptButton({ request }: { request: RequestType }) {
   );
 }
 
-export function DenyButton({ request }: { request: RequestType }) {
+export function DenyButton({
+  request,
+  token,
+}: {
+  request: RequestType;
+  token?: string;
+}) {
   const [loading, setLoading] = React.useState<boolean>(false);
   const [error, setError] = React.useState<string>('');
 
@@ -51,7 +63,7 @@ export function DenyButton({ request }: { request: RequestType }) {
     setLoading(true);
     setError('');
     try {
-      await denyRequest(request);
+      await denyRequest(request, token);
     } catch (error) {
       console.error(error);
       setError((error as Error).message ?? 'Failed to sign in.');

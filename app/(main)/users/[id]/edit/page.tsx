@@ -3,15 +3,14 @@ import { TableSkeleton } from '@/app/ui/skeletons';
 import { Metadata } from 'next';
 import React from 'react';
 import Await from '@/lib/utils';
-import { BookType, UserType } from '@/lib/definitions';
+import { BookType } from '@/lib/definitions';
 import api from '@/lib/api';
 import Result from './result';
 import Pagination from './pagination';
-import PathnameState from '@/app/state/pathnameState';
-import NavButton from '@/app/ui/navbutton';
 import Breadcrumbs from '@/app/ui/breadcrumbs';
 import { notFound } from 'next/navigation';
 import { DeleteButton } from './buttons';
+import { cookies } from 'next/headers';
 
 export const metadata: Metadata = {
   title: 'User',
@@ -27,8 +26,9 @@ export default async function Page({
     page?: string;
   };
 }) {
+  const token = cookies().get('_session')?.value;
   const id = params.id;
-  const user = await api.fetchUserById(id);
+  const user = await api.fetchUserById(id, token);
 
   if (!user) {
     notFound();
@@ -38,6 +38,7 @@ export default async function Page({
     id,
     searchParams?.query,
     Number(searchParams?.page),
+    token,
   );
   return (
     <main className="relative flex flex-col items-center gap-5 px-3 pb-10">
@@ -73,7 +74,7 @@ export default async function Page({
               {(books) => (
                 <ul>
                   {books?.books.map((book, i) => (
-                    <Result key={i} book={book} user={user} />
+                    <Result key={i} book={book} user={user} token={token} />
                   ))}
                   {!books?.books.length && (
                     <li className="flex h-[85px] flex-col justify-center gap-1 pt-3">
@@ -87,12 +88,12 @@ export default async function Page({
             </Await>
           </React.Suspense>
         </div>
-        <DeleteButton id={id} />
+        <DeleteButton id={id} token={token} />
       </section>
 
       {/* Pagination */}
       <footer className="max-width flex items-center justify-center max-lg:justify-center">
-        <Pagination id={id} query={searchParams?.query ?? ''} />
+        <Pagination id={id} query={searchParams?.query ?? ''} token={token} />
       </footer>
     </main>
   );

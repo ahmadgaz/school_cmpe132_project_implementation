@@ -5,14 +5,16 @@ import Form from '@/app/ui/catalog/edit-form';
 import { notFound } from 'next/navigation';
 import api from '@/lib/api';
 import { DeleteButton } from '../../buttons';
+import { cookies } from 'next/headers';
 
 export const metadata: Metadata = {
   title: 'Edit Book',
 };
 
 export default async function Page({ params }: { params: { id: string } }) {
+  const token = cookies().get('_session')?.value;
   const id = params.id;
-  const book = await api.fetchBook(id);
+  const book = await api.fetchBook(id, token);
 
   if (!book) {
     notFound();
@@ -41,9 +43,9 @@ export default async function Page({ params }: { params: { id: string } }) {
       {/* Form */}
       <section className="border-accent-light max-width flex flex-col items-center justify-between rounded-[32px] border-[1px] px-[42px] py-[28px]">
         <div className="flex w-full flex-col gap-6">
-          <Form book={book} />
+          <Form book={book} token={token} />
         </div>
-        <DeleteButton id={id} />
+        <DeleteButton id={id} token={token} />
       </section>
     </main>
   );

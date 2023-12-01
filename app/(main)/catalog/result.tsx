@@ -12,10 +12,12 @@ export default function Result({
   book,
   user,
   href,
+  token,
 }: {
   book: BookType;
   user?: UserType;
   href: string;
+  token?: string;
 }) {
   const pathname = usePathname();
   const pathnameLoaded = pathname === href;
@@ -54,7 +56,7 @@ export default function Result({
           </p>
         </hgroup>
       </Link>
-      <RequestButton book={book} user={user} />
+      <RequestButton book={book} user={user} token={token} />
     </li>
   );
 }

@@ -88,15 +88,16 @@ export async function authenticate(
   redirect('/books');
 }
 
-async function queryHelper<Arguments, ReturnValue>(queries: {
-  args: Arguments;
-  guestQuery?: (args: Arguments) => Promise<ReturnValue>;
-  userQuery?: (args: Arguments, user: UserType) => Promise<ReturnValue>;
-  adminQuery?: (args: Arguments, user: UserType) => Promise<ReturnValue>;
-}) {
+async function queryHelper<Arguments, ReturnValue>(
+  queries: {
+    args: Arguments;
+    guestQuery?: (args: Arguments) => Promise<ReturnValue>;
+    userQuery?: (args: Arguments, user: UserType) => Promise<ReturnValue>;
+    adminQuery?: (args: Arguments, user: UserType) => Promise<ReturnValue>;
+  },
+  token?: string,
+) {
   try {
-    const token = cookies().get('_session')?.value;
-
     if (!token)
       if (typeof queries.guestQuery === 'function')
         return queries.guestQuery(queries.args);
@@ -147,10 +148,7 @@ const CreateBook = BookSchema.omit({
   requestid: true,
 });
 
-export async function createBook(
-  prevState: string | undefined,
-  formData: FormData,
-) {
+export async function createBook(formData: FormData, token?: string) {
   try {
     const validatedFields = CreateBook.safeParse(Object.fromEntries(formData));
     if (!validatedFields.success)
@@ -158,12 +156,15 @@ export async function createBook(
         validatedFields.error.errors.map((error) => error.message).join('\n'),
       );
 
-    await queryHelper<{ validatedFields: Omit<BookType, 'id'> }, void>({
-      args: { validatedFields: validatedFields.data },
-      adminQuery: async function (args, user) {
-        await queries.admin.createBook(args.validatedFields, user);
+    await queryHelper<{ validatedFields: Omit<BookType, 'id'> }, void>(
+      {
+        args: { validatedFields: validatedFields.data },
+        adminQuery: async function (args, user) {
+          await queries.admin.createBook(args.validatedFields, user);
+        },
       },
-    });
+      token,
+    );
   } catch (error) {
     console.error('Database Error:', error);
     return String(error) || 'Failed to add book.';
@@ -178,10 +179,7 @@ const UpdateBook = BookSchema.omit({
   requestid: true,
 });
 
-export async function updateBook(
-  prevState: string | undefined,
-  formData: FormData,
-) {
+export async function updateBook(formData: FormData, token?: string) {
   try {
     const validatedFields = UpdateBook.safeParse(Object.fromEntries(formData));
     if (!validatedFields.success)
@@ -189,12 +187,15 @@ export async function updateBook(
         validatedFields.error.errors.map((error) => error.message).join('\n'),
       );
 
-    await queryHelper<{ validatedFields: BookType }, void>({
-      args: { validatedFields: validatedFields.data as BookType },
-      adminQuery: async function (args, user) {
-        await queries.admin.updateBook(args.validatedFields, user);
+    await queryHelper<{ validatedFields: BookType }, void>(
+      {
+        args: { validatedFields: validatedFields.data as BookType },
+        adminQuery: async function (args, user) {
+          await queries.admin.updateBook(args.validatedFields, user);
+        },
       },
-    });
+      token,
+    );
   } catch (error) {
     console.error('Database Error:', error);
     return String(error) || 'Failed to update book.';
@@ -206,14 +207,17 @@ export async function updateBook(
   redirect('/catalog');
 }
 
-export async function deleteBook(id: string) {
+export async function deleteBook(id: string, token?: string) {
   try {
-    await queryHelper<{ id: string }, void>({
-      args: { id },
-      adminQuery: async function (args, user) {
-        await queries.admin.deleteBook(args.id, user);
+    await queryHelper<{ id: string }, void>(
+      {
+        args: { id },
+        adminQuery: async function (args, user) {
+          await queries.admin.deleteBook(args.id, user);
+        },
       },
-    });
+      token,
+    );
   } catch (error) {
     console.error('Database Error:', error);
     throw (error as Error).message || 'Failed to delete book.';
@@ -225,17 +229,20 @@ export async function deleteBook(id: string) {
   redirect('/catalog');
 }
 
-export async function saveRequest(book: BookType) {
+export async function saveRequest(book: BookType, token?: string) {
   try {
-    await queryHelper<{ book: BookType }, void>({
-      args: { book },
-      userQuery: async function (args, user) {
-        await queries.userOrAdmin.saveRequest(args.book, user);
+    await queryHelper<{ book: BookType }, void>(
+      {
+        args: { book },
+        userQuery: async function (args, user) {
+          await queries.userOrAdmin.saveRequest(args.book, user);
+        },
+        adminQuery: async function (args, user) {
+          await queries.userOrAdmin.saveRequest(args.book, user);
+        },
       },
-      adminQuery: async function (args, user) {
-        await queries.userOrAdmin.saveRequest(args.book, user);
-      },
-    });
+      token,
+    );
   } catch (error) {
     console.error(error);
     throw String(error) || 'Failed to save request.';
@@ -257,10 +264,7 @@ const UpdateProfile = UserAuthSchema.omit({ id: true, role: true })
     }
   });
 
-export async function updateProfile(
-  prevState: string | undefined,
-  formData: FormData,
-) {
+export async function updateProfile(formData: FormData, token?: string) {
   try {
     const validatedFields = UpdateProfile.safeParse(
       Object.fromEntries(formData),
@@ -276,22 +280,25 @@ export async function updateProfile(
         };
       },
       void
-    >({
-      args: { validatedFields: validatedFields.data },
-      userQuery: async function (args, user) {
-        const salt = await bcrypt.genSalt(10);
-        const hashedPassword = await bcrypt.hash(
-          args.validatedFields.password,
-          salt,
-        );
-        await queries.user.updateProfile({
-          id: user.id,
-          username: args.validatedFields.username,
-          password: hashedPassword,
-          role: user.role,
-        });
+    >(
+      {
+        args: { validatedFields: validatedFields.data },
+        userQuery: async function (args, user) {
+          const salt = await bcrypt.genSalt(10);
+          const hashedPassword = await bcrypt.hash(
+            args.validatedFields.password,
+            salt,
+          );
+          await queries.user.updateProfile({
+            id: user.id,
+            username: args.validatedFields.username,
+            password: hashedPassword,
+            role: user.role,
+          });
+        },
       },
-    });
+      token,
+    );
   } catch (error) {
     console.error('Database Error:', error);
     return String(error) || 'Failed to update user.';
@@ -315,10 +322,7 @@ const AddUser = UserAuthSchema.omit({ id: true })
     }
   });
 
-export async function addUser(
-  prevState: string | undefined,
-  formData: FormData,
-) {
+export async function addUser(formData: FormData, token?: string) {
   let role;
   let user;
   try {
@@ -337,39 +341,42 @@ export async function addUser(
         };
       },
       string
-    >({
-      args: { validatedFields: validatedFields.data },
-      guestQuery: async function (args) {
-        const salt = await bcrypt.genSalt(10);
-        const hashedPassword = await bcrypt.hash(
-          args.validatedFields.password,
-          salt,
-        );
-        await queries.guest.register(
-          args.validatedFields.username,
-          hashedPassword,
-        );
-        user = {
-          username: args.validatedFields.username,
-          password: args.validatedFields.password,
-        };
-        return 'USER';
+    >(
+      {
+        args: { validatedFields: validatedFields.data },
+        guestQuery: async function (args) {
+          const salt = await bcrypt.genSalt(10);
+          const hashedPassword = await bcrypt.hash(
+            args.validatedFields.password,
+            salt,
+          );
+          await queries.guest.register(
+            args.validatedFields.username,
+            hashedPassword,
+          );
+          user = {
+            username: args.validatedFields.username,
+            password: args.validatedFields.password,
+          };
+          return 'USER';
+        },
+        adminQuery: async function (args, user) {
+          const salt = await bcrypt.genSalt(10);
+          const hashedPassword = await bcrypt.hash(
+            args.validatedFields.password,
+            salt,
+          );
+          await queries.admin.addUser(
+            user,
+            args.validatedFields.username,
+            hashedPassword,
+            args.validatedFields.role,
+          );
+          return user.role;
+        },
       },
-      adminQuery: async function (args, user) {
-        const salt = await bcrypt.genSalt(10);
-        const hashedPassword = await bcrypt.hash(
-          args.validatedFields.password,
-          salt,
-        );
-        await queries.admin.addUser(
-          user,
-          args.validatedFields.username,
-          hashedPassword,
-          args.validatedFields.role,
-        );
-        return user.role;
-      },
-    });
+      token,
+    );
   } catch (error) {
     console.error('Database Error:', error);
     if ((error as NeonDbError).code === '23505')
@@ -396,21 +403,25 @@ export async function addUser(
   }
 }
 
-export async function deleteUser(id: string) {
+export async function deleteUser(id: string, token?: string) {
   let role;
   try {
-    role = await queryHelper<{ id: string }, string>({
-      args: { id },
-      userQuery: async function (args, user) {
-        await queries.user.deleteProfile(args.id, user);
-        return user.role;
+    role = await queryHelper<{ id: string }, string>(
+      {
+        args: { id },
+        userQuery: async function (args, user) {
+          await queries.user.deleteProfile(args.id, user);
+          return user.role;
+        },
+        adminQuery: async function (args, user) {
+          if (user.id === args.id)
+            throw new Error('You cannot delete yourself.');
+          await queries.admin.deleteUser(args.id, user);
+          return user.role;
+        },
       },
-      adminQuery: async function (args, user) {
-        if (user.id === args.id) throw new Error('You cannot delete yourself.');
-        await queries.admin.deleteUser(args.id, user);
-        return user.role;
-      },
-    });
+      token,
+    );
   } catch (error) {
     console.error('Database Error:', error);
     throw String(error) || 'Failed to delete user.';
@@ -427,14 +438,17 @@ export async function deleteUser(id: string) {
   }
 }
 
-export async function acceptRequest(request: RequestType) {
+export async function acceptRequest(request: RequestType, token?: string) {
   try {
-    await queryHelper<{ request: RequestType }, void>({
-      args: { request },
-      adminQuery: async function (args, user) {
-        await queries.admin.acceptRequest(args.request, user);
+    await queryHelper<{ request: RequestType }, void>(
+      {
+        args: { request },
+        adminQuery: async function (args, user) {
+          await queries.admin.acceptRequest(args.request, user);
+        },
       },
-    });
+      token,
+    );
   } catch (error) {
     console.error(error);
     throw String(error) || 'Failed to accept request.';
@@ -446,14 +460,17 @@ export async function acceptRequest(request: RequestType) {
   redirect('/requests');
 }
 
-export async function denyRequest(request: RequestType) {
+export async function denyRequest(request: RequestType, token?: string) {
   try {
-    await queryHelper<{ request: RequestType }, void>({
-      args: { request },
-      adminQuery: async function (args, user) {
-        await queries.admin.denyRequest(args.request, user);
+    await queryHelper<{ request: RequestType }, void>(
+      {
+        args: { request },
+        adminQuery: async function (args, user) {
+          await queries.admin.denyRequest(args.request, user);
+        },
       },
-    });
+      token,
+    );
   } catch (error) {
     console.error(error);
     throw String(error) || 'Failed to reject request.';

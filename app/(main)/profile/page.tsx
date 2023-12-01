@@ -4,13 +4,15 @@ import Form from '@/app/ui/profile/profile-form';
 import api from '@/lib/api';
 import { notFound } from 'next/navigation';
 import { DeleteButton } from './buttons';
+import { cookies } from 'next/headers';
 
 export const metadata: Metadata = {
   title: 'Profile',
 };
 
 export default async function Page() {
-  const user = await api.fetchProfile();
+  const token = cookies().get('_session')?.value;
+  const user = await api.fetchProfile(token);
 
   if (!user) {
     notFound();
@@ -30,9 +32,9 @@ export default async function Page() {
       {/* Form */}
       <section className="border-accent-light max-width flex flex-col items-center justify-between rounded-[32px] border-[1px] px-[42px] py-[28px]">
         <div className="flex w-full flex-col gap-6">
-          <Form user={user} />
+          <Form user={user} token={token} />
         </div>
-        <DeleteButton id={user.id} />
+        <DeleteButton id={user.id} token={token} />
       </section>
     </main>
   );

@@ -1,8 +1,14 @@
 import PaginationButtons from '@/app/ui/pagination';
 import api from '@/lib/api';
 
-export default async function Pagination({ query }: { query: string }) {
-  const totalPages = await api.fetchBooksPages(query);
+export default async function Pagination({
+  query,
+  token,
+}: {
+  query: string;
+  token?: string;
+}) {
+  const totalPages = await api.fetchBooksPages(query, token);
 
   return (
     <div className="mt-5 flex w-full justify-center">

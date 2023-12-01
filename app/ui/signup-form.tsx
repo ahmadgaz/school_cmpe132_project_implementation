@@ -7,9 +7,12 @@ import { addUser } from '@/lib/actions';
 import { useSearchParams } from 'next/navigation';
 import { LoadingSpinner } from './skeletons';
 
-export default function LoginForm() {
+export default function SignUpForm({ token }: { token?: string }) {
+  function formAction(prevState: string | undefined, formData: FormData) {
+    return addUser(formData, token);
+  }
   const searchParams = useSearchParams();
-  const [state, dispatch] = useFormState(addUser, undefined);
+  const [state, dispatch] = useFormState(formAction, undefined);
 
   return (
     <form action={dispatch} className="space-y-3">

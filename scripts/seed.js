@@ -1,5 +1,5 @@
 const { db } = require('@vercel/postgres');
-const { roles, permissions, users, books } = require('./placeholder-data.js');
+const { roles, permissions, users } = require('./data.js');
 const bcrypt = require('bcrypt');
 
 async function seedRoles(client) {
@@ -74,8 +74,8 @@ async function seedRolesPermissions(client) {
       permission VARCHAR(50) NOT NULL,
       UNIQUE (role, permission),
       PRIMARY KEY (role, permission),
-      FOREIGN KEY (role) REFERENCES roles(rolename),
-      FOREIGN KEY (permission) REFERENCES permissions(permissionname)
+      FOREIGN KEY (role) REFERENCES roles(rolename) ON DELETE CASCADE,
+      FOREIGN KEY (permission) REFERENCES permissions(permissionname) ON DELETE CASCADE
     );
   `;
 
@@ -149,91 +149,6 @@ async function seedUsers(client) {
   }
 }
 
-async function seedBooks(client) {
-  try {
-    await client.sql`CREATE EXTENSION IF NOT EXISTS "uuid-ossp"`;
-
-    const createTable = await client.sql`
-      CREATE TABLE IF NOT EXISTS books (
-        id UUID DEFAULT uuid_generate_v4() PRIMARY KEY,
-        title VARCHAR(255) NOT NULL,
-        author VARCHAR(255) NOT NULL,
-        borrowerid UUID,
-        requestid UUID,
-        UNIQUE (id),
-        FOREIGN KEY (borrowerid) REFERENCES users(id) ON DELETE SET NULL,
-        FOREIGN KEY (requestid) REFERENCES requests(id) ON DELETE SET NULL
-      );
-    `;
-
-    console.log(`Created "books" table`);
-
-    const insertedBooks = await Promise.all(
-      books.map((book) => {
-        if (book.borrowerid) {
-          return client.sql`
-              INSERT INTO books (title, author, borrowerid)
-              VALUES (${book.title}, ${book.author}, ${book.borrowerid})
-            `;
-        } else {
-          return client.sql`
-              INSERT INTO books (title, author)
-              VALUES (${book.title}, ${book.author})
-            `;
-        }
-      }),
-    );
-
-    console.log(`Seeded ${insertedBooks.length} books`);
-
-    return {
-      createTable,
-      books: insertedBooks,
-    };
-  } catch (error) {
-    console.error('Error seeding books:', error);
-    throw error;
-  }
-}
-
-async function createLogs(client) {
-  try {
-    await client.sql`CREATE EXTENSION IF NOT EXISTS "uuid-ossp"`;
-
-    const createTable = await client.sql`
-      CREATE TABLE IF NOT EXISTS logs (
-        id UUID DEFAULT uuid_generate_v4() PRIMARY KEY,
-        createdat TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
-        permission VARCHAR(50) NOT NULL,
-        username VARCHAR(255) NOT NULL,
-        userid UUID,
-        affecteduser JSON,
-        newuser JSON,
-        affecteduserid UUID,
-        affectedbook JSON,
-        newbook JSON,
-        affectedbookid UUID,
-        affectedrequest JSON,
-        affectedrequestid UUID,
-        UNIQUE (id),
-        FOREIGN KEY (userid) REFERENCES users(id) ON DELETE SET NULL
-        FOREIGN KEY (affecteduserid) REFERENCES users(id) ON DELETE SET NULL
-        FOREIGN KEY (affectedbookid) REFERENCES books(id) ON DELETE SET NULL
-        FOREIGN KEY (affectedrequestid) REFERENCES requests(id) ON DELETE SET NULL
-      );
-    `;
-
-    console.log(`Created "logs" table`);
-
-    return {
-      createTable,
-    };
-  } catch (error) {
-    console.error('Error creating logs table:', error);
-    throw error;
-  }
-}
-
 async function createRequests(client) {
   try {
     await client.sql`CREATE EXTENSION IF NOT EXISTS "uuid-ossp"`;
@@ -261,25 +176,91 @@ async function createRequests(client) {
   }
 }
 
+async function createBooks(client) {
+  try {
+    await client.sql`CREATE EXTENSION IF NOT EXISTS "uuid-ossp"`;
+
+    const createTable = await client.sql`
+      CREATE TABLE IF NOT EXISTS books (
+        id UUID DEFAULT uuid_generate_v4() PRIMARY KEY,
+        title VARCHAR(255) NOT NULL,
+        author VARCHAR(255) NOT NULL,
+        borrowerid UUID,
+        requestid UUID,
+        UNIQUE (id),
+        FOREIGN KEY (borrowerid) REFERENCES users(id) ON DELETE SET NULL,
+        FOREIGN KEY (requestid) REFERENCES requests(id) ON DELETE SET NULL
+      );
+    `;
+
+    console.log(`Created "books" table`);
+
+    return {
+      createTable,
+    };
+  } catch (error) {
+    console.error('Error seeding books:', error);
+    throw error;
+  }
+}
+
+async function createLogs(client) {
+  try {
+    await client.sql`CREATE EXTENSION IF NOT EXISTS "uuid-ossp"`;
+
+    const createTable = await client.sql`
+        CREATE TABLE IF NOT EXISTS logs (
+          id UUID DEFAULT uuid_generate_v4() PRIMARY KEY,
+          createdat TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+          permission VARCHAR(50) NOT NULL,
+          username VARCHAR(255) NOT NULL,
+          userid UUID,
+          affecteduser JSON,
+          newuser JSON,
+          affecteduserid UUID,
+          affectedbook JSON,
+          newbook JSON,
+          affectedbookid UUID,
+          affectedrequest JSON,
+          affectedrequestid UUID,
+          UNIQUE (id),
+          FOREIGN KEY (userid) REFERENCES users(id) ON DELETE SET NULL,
+          FOREIGN KEY (affecteduserid) REFERENCES users(id) ON DELETE SET NULL,
+          FOREIGN KEY (affectedbookid) REFERENCES books(id) ON DELETE SET NULL,
+          FOREIGN KEY (affectedrequestid) REFERENCES requests(id) ON DELETE SET NULL
+      );
+    `;
+
+    console.log(`Created "logs" table`);
+
+    return {
+      createTable,
+    };
+  } catch (error) {
+    console.error('Error creating logs table:', error);
+    throw error;
+  }
+}
+
 async function main() {
   const client = await db.connect();
 
   client.sql`
-    DELETE FROM roles;
-    DELETE FROM permissions;
-    DELETE FROM rolesPermissions;
-    DELETE FROM users;
-    DELETE FROM logs;
-    DELETE FROM requests;
-    DELETE FROM books;`;
+    TRUNCATE TABLE roles CASCADE;
+    TRUNCATE TABLE permissions CASCADE;
+    TRUNCATE TABLE rolesPermissions CASCADE;
+    TRUNCATE TABLE users CASCADE;
+    TRUNCATE TABLE logs CASCADE;
+    TRUNCATE TABLE requests CASCADE;
+    TRUNCATE TABLE books CASCADE;`;
 
-  // await seedRoles(client);
-  // await seedPermissions(client);
-  // await seedRolesPermissions(client);
-  // await seedUsers(client);
-  // await createLogs(client);
-  // await createRequests(client);
-  await seedBooks(client);
+  await seedRoles(client);
+  await seedPermissions(client);
+  await seedRolesPermissions(client);
+  await seedUsers(client);
+  await createRequests(client);
+  await createBooks(client);
+  await createLogs(client);
 
   await client.end();
 }

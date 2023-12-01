@@ -1,7 +1,13 @@
 import { RequestType } from '@/lib/definitions';
 import { AcceptButton, DenyButton } from './buttons';
 
-export default function Result({ request }: { request: RequestType }) {
+export default function Result({
+  request,
+  token,
+}: {
+  request: RequestType;
+  token?: string;
+}) {
   return (
     <li className="border-accent-light flex h-fit min-h-[85px] items-center justify-between gap-10 border-t-[1px] pb-1 pr-6 pt-1">
       <hgroup className="flex h-fit flex-col gap-1">
@@ -12,8 +18,8 @@ export default function Result({ request }: { request: RequestType }) {
         </h1>
       </hgroup>
       <div className="flex h-full w-fit gap-3">
-        <AcceptButton request={request} />
-        <DenyButton request={request} />
+        <AcceptButton request={request} token={token} />
+        <DenyButton request={request} token={token} />
       </div>
     </li>
   );

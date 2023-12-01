@@ -6,8 +6,17 @@ import { ExclamationCircleIcon } from '@heroicons/react/24/outline';
 import { UserType } from '@/lib/definitions';
 import { updateProfile } from '@/lib/actions';
 
-export default function Form({ user }: { user: UserType }) {
-  const [state, dispatch] = useFormState(updateProfile, undefined);
+export default function Form({
+  user,
+  token,
+}: {
+  user: UserType;
+  token?: string;
+}) {
+  function formAction(prevState: string | undefined, formData: FormData) {
+    return updateProfile(formData, token);
+  }
+  const [state, dispatch] = useFormState(formAction, undefined);
 
   return (
     <form action={dispatch}>

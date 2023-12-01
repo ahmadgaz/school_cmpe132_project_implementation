@@ -7,7 +7,6 @@ import {
 } from './definitions';
 import { jwtVerify } from 'jose';
 import queries from './queries';
-import { cookies } from 'next/headers';
 
 /**
  * @vercel/postgres STRING LITERALS ARE SAFE SQL QUERIES!
@@ -33,15 +32,16 @@ import { cookies } from 'next/headers';
  * The database will always treat data as data and not as SQL code in a parameterized query.
  */
 
-async function queryHelper<Arguments, ReturnValue>(queries: {
-  args: Arguments;
-  guestQuery?: (args: Arguments) => Promise<ReturnValue>;
-  userQuery?: (args: Arguments, user: UserType) => Promise<ReturnValue>;
-  adminQuery?: (args: Arguments, user: UserType) => Promise<ReturnValue>;
-}) {
+async function queryHelper<Arguments, ReturnValue>(
+  queries: {
+    args: Arguments;
+    guestQuery?: (args: Arguments) => Promise<ReturnValue>;
+    userQuery?: (args: Arguments, user: UserType) => Promise<ReturnValue>;
+    adminQuery?: (args: Arguments, user: UserType) => Promise<ReturnValue>;
+  },
+  token?: string,
+) {
   try {
-    const token = cookies().get('_session')?.value;
-
     if (!token)
       if (typeof queries.guestQuery === 'function')
         return queries.guestQuery(queries.args);
@@ -79,183 +79,205 @@ async function queryHelper<Arguments, ReturnValue>(queries: {
 }
 
 const ITEMS_PER_PAGE = 6;
-export async function fetchCatalog(query?: string, currentPage?: number) {
+export async function fetchCatalog(
+  query?: string,
+  currentPage?: number,
+  token?: string,
+) {
   try {
     return await queryHelper<
       { query?: string; itemsPerPage: number; offset: number },
       { books: BookType[]; user?: UserType }
-    >({
-      args: {
-        query,
-        itemsPerPage: ITEMS_PER_PAGE,
-        offset: currentPage ? (currentPage - 1) * ITEMS_PER_PAGE : 0,
+    >(
+      {
+        args: {
+          query,
+          itemsPerPage: ITEMS_PER_PAGE,
+          offset: currentPage ? (currentPage - 1) * ITEMS_PER_PAGE : 0,
+        },
+        guestQuery: async function (args) {
+          const books = await queries.guest.fetchCatalog(
+            args.query || '',
+            args.itemsPerPage,
+            args.offset,
+          );
+          return { books };
+        },
+        userQuery: async function (args, user) {
+          const books = await queries.user.fetchCatalog(
+            user,
+            args.query || '',
+            args.itemsPerPage,
+            args.offset,
+          );
+          return {
+            books,
+            user,
+          };
+        },
+        adminQuery: async function (args, user) {
+          const books = await queries.admin.fetchCatalog(
+            user,
+            args.query || '',
+            args.itemsPerPage,
+            args.offset,
+          );
+          return {
+            books,
+            user,
+          };
+        },
       },
-      guestQuery: async function (args) {
-        const books = await queries.guest.fetchCatalog(
-          args.query || '',
-          args.itemsPerPage,
-          args.offset,
-        );
-        return { books };
-      },
-      userQuery: async function (args, user) {
-        const books = await queries.user.fetchCatalog(
-          user,
-          args.query || '',
-          args.itemsPerPage,
-          args.offset,
-        );
-        return {
-          books,
-          user,
-        };
-      },
-      adminQuery: async function (args, user) {
-        const books = await queries.admin.fetchCatalog(
-          user,
-          args.query || '',
-          args.itemsPerPage,
-          args.offset,
-        );
-        return {
-          books,
-          user,
-        };
-      },
-    });
+      token,
+    );
   } catch (error) {
     console.error('Database Error:', error);
     throw String(error) || 'Failed to fetch books.';
   }
 }
 
-export async function fetchCatalogPages(query?: string) {
+export async function fetchCatalogPages(query?: string, token?: string) {
   try {
-    return await queryHelper<{ query?: string }, number>({
-      args: { query },
-      guestQuery: async function (args) {
-        const count = await queries.guest.fetchCatalogPages(args.query || '');
-        return Math.ceil(Number(count) / ITEMS_PER_PAGE);
+    return await queryHelper<{ query?: string }, number>(
+      {
+        args: { query },
+        guestQuery: async function (args) {
+          const count = await queries.guest.fetchCatalogPages(args.query || '');
+          return Math.ceil(Number(count) / ITEMS_PER_PAGE);
+        },
+        userQuery: async function (args, user) {
+          const count = await queries.user.fetchCatalogPages(
+            user,
+            args.query || '',
+          );
+          return Math.ceil(Number(count) / ITEMS_PER_PAGE);
+        },
+        adminQuery: async function (args, user) {
+          const count = await queries.admin.fetchCatalogPages(
+            user,
+            args.query || '',
+          );
+          return Math.ceil(Number(count) / ITEMS_PER_PAGE);
+        },
       },
-      userQuery: async function (args, user) {
-        const count = await queries.user.fetchCatalogPages(
-          user,
-          args.query || '',
-        );
-        return Math.ceil(Number(count) / ITEMS_PER_PAGE);
-      },
-      adminQuery: async function (args, user) {
-        const count = await queries.admin.fetchCatalogPages(
-          user,
-          args.query || '',
-        );
-        return Math.ceil(Number(count) / ITEMS_PER_PAGE);
-      },
-    });
+      token,
+    );
   } catch (error) {
     console.error('Database Error:', error);
     throw String(error) || 'Failed to fetch books pages.';
   }
 }
 
-export async function fetchBook(id?: string) {
+export async function fetchBook(id?: string, token?: string) {
   try {
-    return await queryHelper<{ id?: string }, { book: BookType }>({
-      args: { id },
-      adminQuery: async function (args, user) {
-        if (!args.id) throw new Error('Invalid book id.');
-        const book = await queries.admin.fetchBook(args.id);
-        return { book };
+    return await queryHelper<{ id?: string }, { book: BookType }>(
+      {
+        args: { id },
+        adminQuery: async function (args, user) {
+          if (!args.id) throw new Error('Invalid book id.');
+          const book = await queries.admin.fetchBook(args.id);
+          return { book };
+        },
       },
-    }).then((data) => data.book);
+      token,
+    ).then((data) => data.book);
   } catch (error) {
     console.error('Database Error:', error);
     throw String(error) || 'Failed to fetch book.';
   }
 }
 
-export async function fetchBooks(query?: string, currentPage?: number) {
+export async function fetchBooks(
+  query?: string,
+  currentPage?: number,
+  token?: string,
+) {
   try {
     return await queryHelper<
       { query?: string; itemsPerPage: number; offset: number },
       { books: BookType[]; user?: UserType }
-    >({
-      args: {
-        query,
-        itemsPerPage: ITEMS_PER_PAGE,
-        offset: currentPage ? (currentPage - 1) * ITEMS_PER_PAGE : 0,
+    >(
+      {
+        args: {
+          query,
+          itemsPerPage: ITEMS_PER_PAGE,
+          offset: currentPage ? (currentPage - 1) * ITEMS_PER_PAGE : 0,
+        },
+        userQuery: async function (args, user) {
+          const books = await queries.userOrAdmin.fetchBooks(
+            user,
+            args.query || '',
+            args.itemsPerPage,
+            args.offset,
+          );
+          return {
+            books,
+            user,
+          };
+        },
+        adminQuery: async function (args, user) {
+          const books = await queries.userOrAdmin.fetchBooks(
+            user,
+            args.query || '',
+            args.itemsPerPage,
+            args.offset,
+          );
+          return {
+            books,
+            user,
+          };
+        },
       },
-      userQuery: async function (args, user) {
-        const books = await queries.userOrAdmin.fetchBooks(
-          user,
-          args.query || '',
-          args.itemsPerPage,
-          args.offset,
-        );
-        return {
-          books,
-          user,
-        };
-      },
-      adminQuery: async function (args, user) {
-        const books = await queries.userOrAdmin.fetchBooks(
-          user,
-          args.query || '',
-          args.itemsPerPage,
-          args.offset,
-        );
-        return {
-          books,
-          user,
-        };
-      },
-    });
+      token,
+    );
   } catch (error) {
     console.error('Database Error:', error);
     throw String(error) || 'Failed to fetch books.';
   }
 }
 
-export async function fetchBooksPages(query?: string) {
+export async function fetchBooksPages(query?: string, token?: string) {
   try {
-    return await queryHelper<{ query?: string }, number>({
-      args: { query },
-      userQuery: async function (args, user) {
-        const count = await queries.userOrAdmin.fetchBooksPages(
-          user,
-          args.query || '',
-        );
-        return Math.ceil(Number(count) / ITEMS_PER_PAGE);
+    return await queryHelper<{ query?: string }, number>(
+      {
+        args: { query },
+        userQuery: async function (args, user) {
+          const count = await queries.userOrAdmin.fetchBooksPages(
+            user,
+            args.query || '',
+          );
+          return Math.ceil(Number(count) / ITEMS_PER_PAGE);
+        },
+        adminQuery: async function (args, user) {
+          const count = await queries.userOrAdmin.fetchBooksPages(
+            user,
+            args.query || '',
+          );
+          return Math.ceil(Number(count) / ITEMS_PER_PAGE);
+        },
       },
-      adminQuery: async function (args, user) {
-        const count = await queries.userOrAdmin.fetchBooksPages(
-          user,
-          args.query || '',
-        );
-        return Math.ceil(Number(count) / ITEMS_PER_PAGE);
-      },
-    });
+      token,
+    );
   } catch (error) {
     console.error('Database Error:', error);
     throw String(error) || 'Failed to fetch books pages.';
   }
 }
 
-export async function fetchProfile(query?: string, currentPage?: number) {
+export async function fetchProfile(token?: string) {
   try {
-    return await queryHelper<{}, { user: UserType }>({
-      args: {
-        query,
-        itemsPerPage: ITEMS_PER_PAGE,
-        offset: currentPage ? (currentPage - 1) * ITEMS_PER_PAGE : 0,
+    return await queryHelper<{}, { user: UserType }>(
+      {
+        args: {},
+        userQuery: async function (args, user) {
+          return { user };
+        },
+        adminQuery: async function (args, user) {
+          return { user };
+        },
       },
-      userQuery: async function (args, user) {
-        return { user };
-      },
-      adminQuery: async function (args, user) {
-        return { user };
-      },
-    }).then((data) => data.user);
+      token,
+    ).then((data) => data.user);
   } catch (error) {
     console.error('Database Error:', error);
     throw String(error) || 'Failed to fetch profile.';
@@ -266,233 +288,285 @@ export async function fetchUserBooks(
   id?: string,
   query?: string,
   currentPage?: number,
+  token?: string,
 ) {
   try {
     return await queryHelper<
       { id?: string; query?: string; itemsPerPage: number; offset: number },
       { books: BookType[] }
-    >({
-      args: {
-        id,
-        query,
-        itemsPerPage: ITEMS_PER_PAGE,
-        offset: currentPage ? (currentPage - 1) * ITEMS_PER_PAGE : 0,
+    >(
+      {
+        args: {
+          id,
+          query,
+          itemsPerPage: ITEMS_PER_PAGE,
+          offset: currentPage ? (currentPage - 1) * ITEMS_PER_PAGE : 0,
+        },
+        adminQuery: async function (args) {
+          if (!args.id) throw new Error('Invalid user id.');
+          const books = await queries.admin.fetchUserBooks(
+            args.id,
+            args.query || '',
+            args.itemsPerPage,
+            args.offset,
+          );
+          return {
+            books,
+          };
+        },
       },
-      adminQuery: async function (args) {
-        if (!args.id) throw new Error('Invalid user id.');
-        const books = await queries.admin.fetchUserBooks(
-          args.id,
-          args.query || '',
-          args.itemsPerPage,
-          args.offset,
-        );
-        return {
-          books,
-        };
-      },
-    });
+      token,
+    );
   } catch (error) {
     console.error('Database Error:', error);
     throw String(error) || 'Failed to fetch books.';
   }
 }
 
-export async function fetchUserBooksPages(id?: string, query?: string) {
+export async function fetchUserBooksPages(
+  id?: string,
+  query?: string,
+  token?: string,
+) {
   try {
-    return await queryHelper<{ id?: string; query?: string }, number>({
-      args: { id, query },
-      adminQuery: async function (args, user) {
-        if (!args.id) throw new Error('Invalid user id.');
-        const count = await queries.admin.fetchUserBooksPages(
-          args.id,
-          args.query || '',
-        );
-        return Math.ceil(Number(count) / ITEMS_PER_PAGE);
+    return await queryHelper<{ id?: string; query?: string }, number>(
+      {
+        args: { id, query },
+        adminQuery: async function (args, user) {
+          if (!args.id) throw new Error('Invalid user id.');
+          const count = await queries.admin.fetchUserBooksPages(
+            args.id,
+            args.query || '',
+          );
+          return Math.ceil(Number(count) / ITEMS_PER_PAGE);
+        },
       },
-    });
+      token,
+    );
   } catch (error) {
     console.error('Database Error:', error);
     throw String(error) || 'Failed to fetch books pages.';
   }
 }
 
-export async function fetchUserByUsername(username?: string) {
+export async function fetchUserByUsername(username?: string, token?: string) {
   try {
-    return await queryHelper<{ username?: string }, UserAuthType>({
-      args: { username },
-      guestQuery: async function (args) {
-        if (!args.username) throw new Error('Invalid username.');
-        const userQuery = await queries.guest.fetchUserByUsername(
-          args.username,
-        );
-        return userQuery;
+    return await queryHelper<{ username?: string }, UserAuthType>(
+      {
+        args: { username },
+        guestQuery: async function (args) {
+          if (!args.username) throw new Error('Invalid username.');
+          const userQuery = await queries.guest.fetchUserByUsername(
+            args.username,
+          );
+          return userQuery;
+        },
       },
-    });
+      token,
+    );
   } catch (error) {
     console.error('Database Error:', error);
     throw String(error) || 'Failed to fetch user.';
   }
 }
 
-export async function fetchUserById(id?: string) {
+export async function fetchUserById(id?: string, token?: string) {
   try {
-    return await queryHelper<{ id?: string }, UserType>({
-      args: { id },
-      adminQuery: async function (args, user) {
-        if (!args.id) throw new Error('Invalid user id.');
-        const userQuery = await queries.admin.fetchUserById(args.id, user);
-        return userQuery;
+    return await queryHelper<{ id?: string }, UserType>(
+      {
+        args: { id },
+        adminQuery: async function (args, user) {
+          if (!args.id) throw new Error('Invalid user id.');
+          const userQuery = await queries.admin.fetchUserById(args.id, user);
+          return userQuery;
+        },
       },
-    });
+      token,
+    );
   } catch (error) {
     console.error('Database Error:', error);
     throw String(error) || 'Failed to fetch user.';
   }
 }
 
-export async function fetchUsers(query?: string, currentPage?: number) {
+export async function fetchUsers(
+  query?: string,
+  currentPage?: number,
+  token?: string,
+) {
   try {
     return await queryHelper<
       { query?: string; itemsPerPage: number; offset: number },
       { users?: UserType[] }
-    >({
-      args: {
-        query,
-        itemsPerPage: ITEMS_PER_PAGE,
-        offset: currentPage ? (currentPage - 1) * ITEMS_PER_PAGE : 0,
+    >(
+      {
+        args: {
+          query,
+          itemsPerPage: ITEMS_PER_PAGE,
+          offset: currentPage ? (currentPage - 1) * ITEMS_PER_PAGE : 0,
+        },
+        adminQuery: async function (args, user) {
+          const users = await queries.admin.fetchUsers(
+            user,
+            args.query || '',
+            args.itemsPerPage,
+            args.offset,
+          );
+          return {
+            users,
+          };
+        },
       },
-      adminQuery: async function (args, user) {
-        const users = await queries.admin.fetchUsers(
-          user,
-          args.query || '',
-          args.itemsPerPage,
-          args.offset,
-        );
-        return {
-          users,
-        };
-      },
-    });
+      token,
+    );
   } catch (error) {
     console.error('Database Error:', error);
     throw String(error) || 'Failed to fetch users.';
   }
 }
 
-export async function fetchUsersPages(query?: string) {
+export async function fetchUsersPages(query?: string, token?: string) {
   try {
-    return await queryHelper<{ query?: string }, number>({
-      args: { query },
-      adminQuery: async function (args, user) {
-        const count = await queries.admin.fetchUsersPages(
-          user,
-          args.query || '',
-        );
-        return Math.ceil(Number(count) / ITEMS_PER_PAGE);
+    return await queryHelper<{ query?: string }, number>(
+      {
+        args: { query },
+        adminQuery: async function (args, user) {
+          const count = await queries.admin.fetchUsersPages(
+            user,
+            args.query || '',
+          );
+          return Math.ceil(Number(count) / ITEMS_PER_PAGE);
+        },
       },
-    });
+      token,
+    );
   } catch (error) {
     console.error('Database Error:', error);
     throw String(error) || 'Failed to fetch usersw pages.';
   }
 }
 
-export async function fetchRequests(query?: string, currentPage?: number) {
+export async function fetchRequests(
+  query?: string,
+  currentPage?: number,
+  token?: string,
+) {
   try {
     return await queryHelper<
       { query?: string; itemsPerPage: number; offset: number },
       RequestType[]
-    >({
-      args: {
-        query,
-        itemsPerPage: ITEMS_PER_PAGE,
-        offset: currentPage ? (currentPage - 1) * ITEMS_PER_PAGE : 0,
+    >(
+      {
+        args: {
+          query,
+          itemsPerPage: ITEMS_PER_PAGE,
+          offset: currentPage ? (currentPage - 1) * ITEMS_PER_PAGE : 0,
+        },
+        adminQuery: async function (args, user) {
+          const requests = await queries.admin.fetchRequests(
+            args.query || '',
+            args.itemsPerPage,
+            args.offset,
+          );
+          return requests;
+        },
       },
-      adminQuery: async function (args, user) {
-        const requests = await queries.admin.fetchRequests(
-          args.query || '',
-          args.itemsPerPage,
-          args.offset,
-        );
-        return requests;
-      },
-    });
+      token,
+    );
   } catch (error) {
     console.error('Database Error:', error);
     throw String(error) || 'Failed to fetch requests.';
   }
 }
 
-export async function fetchRequestsPages(query?: string) {
+export async function fetchRequestsPages(query?: string, token?: string) {
   try {
-    return await queryHelper<{ query?: string }, number>({
-      args: { query },
-      adminQuery: async function (args, user) {
-        const count = await queries.admin.fetchRequestsPages(args.query || '');
-        return Math.ceil(Number(count) / ITEMS_PER_PAGE);
+    return await queryHelper<{ query?: string }, number>(
+      {
+        args: { query },
+        adminQuery: async function (args, user) {
+          const count = await queries.admin.fetchRequestsPages(
+            args.query || '',
+          );
+          return Math.ceil(Number(count) / ITEMS_PER_PAGE);
+        },
       },
-    });
+      token,
+    );
   } catch (error) {
     console.error('Database Error:', error);
     throw String(error) || 'Failed to fetch requests pages.';
   }
 }
 
-export async function fetchLogs(query?: string, currentPage?: number) {
+export async function fetchLogs(
+  query?: string,
+  currentPage?: number,
+  token?: string,
+) {
   try {
     return await queryHelper<
       { query?: string; itemsPerPage: number; offset: number },
       LogType[]
-    >({
-      args: {
-        query,
-        itemsPerPage: ITEMS_PER_PAGE,
-        offset: currentPage ? (currentPage - 1) * ITEMS_PER_PAGE : 0,
+    >(
+      {
+        args: {
+          query,
+          itemsPerPage: ITEMS_PER_PAGE,
+          offset: currentPage ? (currentPage - 1) * ITEMS_PER_PAGE : 0,
+        },
+        adminQuery: async function (args, user) {
+          const logs = await queries.admin.fetchLogs(
+            args.query || '',
+            args.itemsPerPage,
+            args.offset,
+          );
+          return logs;
+        },
       },
-      adminQuery: async function (args, user) {
-        const logs = await queries.admin.fetchLogs(
-          args.query || '',
-          args.itemsPerPage,
-          args.offset,
-        );
-        return logs;
-      },
-    });
+      token,
+    );
   } catch (error) {
     console.error('Database Error:', error);
     throw String(error) || 'Failed to fetch logs.';
   }
 }
 
-export async function fetchLogsPages(query?: string) {
+export async function fetchLogsPages(query?: string, token?: string) {
   try {
-    return await queryHelper<{ query?: string }, number>({
-      args: { query },
-      adminQuery: async function (args, user) {
-        const count = await queries.admin.fetchLogsPages(args.query || '');
-        return Math.ceil(Number(count) / ITEMS_PER_PAGE);
+    return await queryHelper<{ query?: string }, number>(
+      {
+        args: { query },
+        adminQuery: async function (args, user) {
+          const count = await queries.admin.fetchLogsPages(args.query || '');
+          return Math.ceil(Number(count) / ITEMS_PER_PAGE);
+        },
       },
-    });
+      token,
+    );
   } catch (error) {
     console.error('Database Error:', error);
     throw String(error) || 'Failed to fetch logs pages.';
   }
 }
 
-export async function fetchRole() {
+export async function fetchRole(token?: string) {
   try {
-    return await queryHelper<{}, string>({
-      args: {},
-      guestQuery: async function (args) {
-        return 'GUEST';
+    return await queryHelper<{}, string>(
+      {
+        args: {},
+        guestQuery: async function (args) {
+          return 'GUEST';
+        },
+        userQuery: async function (args, user) {
+          return user.role;
+        },
+        adminQuery: async function (args, user) {
+          return user.role;
+        },
       },
-      userQuery: async function (args, user) {
-        return user.role;
-      },
-      adminQuery: async function (args, user) {
-        return user.role;
-      },
-    });
+      token,
+    );
   } catch (error) {
     console.error('Database Error:', error);
     throw String(error) || 'Failed to fetch role.';

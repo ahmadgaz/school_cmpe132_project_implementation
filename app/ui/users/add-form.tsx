@@ -7,8 +7,11 @@ import PathnameState from '@/app/state/pathnameState';
 import NavButton from '../navbutton';
 import { addUser } from '@/lib/actions';
 
-export default function Form() {
-  const [state, dispatch] = useFormState(addUser, undefined);
+export default function Form({ token }: { token?: string }) {
+  function formAction(prevState: string | undefined, formData: FormData) {
+    return addUser(formData, token);
+  }
+  const [state, dispatch] = useFormState(formAction, undefined);
 
   return (
     <form action={dispatch}>

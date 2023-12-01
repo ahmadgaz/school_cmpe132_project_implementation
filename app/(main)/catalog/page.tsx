@@ -9,6 +9,7 @@ import Result from './result';
 import Pagination from './pagination';
 import PathnameState from '@/app/state/pathnameState';
 import NavButton from '@/app/ui/navbutton';
+import { cookies } from 'next/headers';
 
 export const metadata: Metadata = {
   title: 'Catalog',
@@ -22,8 +23,9 @@ export default async function Page({
     page?: string;
   };
 }) {
+  const token = cookies().get('_session')?.value;
   const promise: Promise<{ books: BookType[]; user?: UserType }> =
-    api.fetchCatalog(searchParams?.query, Number(searchParams?.page));
+    api.fetchCatalog(searchParams?.query, Number(searchParams?.page), token);
   return (
     <main className="relative flex flex-col items-center gap-5 px-3 pb-10">
       {/* Header */}
@@ -62,6 +64,7 @@ export default async function Page({
                         href={`/catalog/${book.id}/edit`}
                         book={book}
                         user={catalog?.user}
+                        token={token}
                       />
                     ))}
                   </PathnameState>
@@ -81,7 +84,7 @@ export default async function Page({
 
       {/* Pagination */}
       <footer className="max-width flex items-center justify-center max-lg:justify-center">
-        <Pagination query={searchParams?.query ?? ''} />
+        <Pagination query={searchParams?.query ?? ''} token={token} />
       </footer>
     </main>
   );

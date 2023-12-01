@@ -7,6 +7,7 @@ import { BookType, UserType } from '@/lib/definitions';
 import api from '@/lib/api';
 import Result from './result';
 import Pagination from './pagination';
+import { cookies } from 'next/headers';
 
 export const metadata: Metadata = {
   title: 'My Books',
@@ -20,8 +21,9 @@ export default async function Page({
     page?: string;
   };
 }) {
+  const token = cookies().get('_session')?.value;
   const promise: Promise<{ books: BookType[]; user?: UserType }> =
-    api.fetchBooks(searchParams?.query, Number(searchParams?.page));
+    api.fetchBooks(searchParams?.query, Number(searchParams?.page), token);
   return (
     <main className="relative flex flex-col items-center gap-5 px-3 pb-10">
       {/* Header */}
@@ -47,7 +49,12 @@ export default async function Page({
               {(books) => (
                 <ul>
                   {books?.books.map((book, i) => (
-                    <Result key={i} book={book} user={books?.user} />
+                    <Result
+                      key={i}
+                      book={book}
+                      user={books?.user}
+                      token={token}
+                    />
                   ))}
                   {!books?.books.length && (
                     <li className="flex h-[85px] flex-col justify-center gap-1 pt-3">
@@ -65,7 +72,7 @@ export default async function Page({
 
       {/* Pagination */}
       <footer className="max-width flex items-center justify-center max-lg:justify-center">
-        <Pagination query={searchParams?.query ?? ''} />
+        <Pagination query={searchParams?.query ?? ''} token={token} />
       </footer>
     </main>
   );

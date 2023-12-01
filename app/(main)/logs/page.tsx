@@ -7,6 +7,7 @@ import { LogType } from '@/lib/definitions';
 import api from '@/lib/api';
 import Result from './result';
 import Pagination from './pagination';
+import { cookies } from 'next/headers';
 
 export const metadata: Metadata = {
   title: 'Logs',
@@ -20,9 +21,11 @@ export default async function Page({
     page?: string;
   };
 }) {
+  const token = cookies().get('_session')?.value;
   const promise: Promise<LogType[]> = api.fetchLogs(
     searchParams?.query,
     Number(searchParams?.page),
+    token,
   );
   return (
     <main className="relative flex flex-col items-center gap-5 px-3 pb-10">
@@ -65,7 +68,7 @@ export default async function Page({
 
       {/* Pagination */}
       <footer className="max-width flex items-center justify-center max-lg:justify-center">
-        <Pagination query={searchParams?.query ?? ''} />
+        <Pagination query={searchParams?.query ?? ''} token={token} />
       </footer>
     </main>
   );

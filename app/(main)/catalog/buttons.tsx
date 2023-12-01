@@ -20,9 +20,11 @@ import { TrashIcon } from '@heroicons/react/24/outline';
 export function RequestButton({
   book,
   user,
+  token,
 }: {
   book: BookType;
   user?: UserType;
+  token?: string;
 }) {
   const [loading, setLoading] = React.useState<boolean>(false);
   const [error, setError] = React.useState<string>('');
@@ -31,7 +33,7 @@ export function RequestButton({
     setLoading(true);
     setError('');
     try {
-      await saveRequest(book);
+      await saveRequest(book, token);
     } catch (error) {
       console.error(error);
       setError((error as Error).message ?? 'Failed to sign in.');
@@ -107,7 +109,7 @@ export function RequestButton({
   );
 }
 
-export function DeleteButton({ id }: { id: string }) {
+export function DeleteButton({ id, token }: { id: string; token?: string }) {
   const [loading, setLoading] = React.useState<boolean>(false);
   const [error, setError] = React.useState<string>('');
 
@@ -115,7 +117,7 @@ export function DeleteButton({ id }: { id: string }) {
     setLoading(true);
     setError('');
     try {
-      await deleteBook(id);
+      await deleteBook(id, token);
     } catch (error) {
       console.error(error);
       setError((error as Error).message ?? 'Failed to sign in.');

@@ -8,8 +8,17 @@ import { updateBook } from '@/lib/actions';
 import PathnameState from '@/app/state/pathnameState';
 import NavButton from '../navbutton';
 
-export default function Form({ book }: { book: BookType }) {
-  const [state, dispatch] = useFormState(updateBook, undefined);
+export default function Form({
+  book,
+  token,
+}: {
+  book: BookType;
+  token?: string;
+}) {
+  function formAction(prevState: string | undefined, formData: FormData) {
+    return updateBook(formData, token);
+  }
+  const [state, dispatch] = useFormState(formAction, undefined);
 
   return (
     <form action={dispatch}>

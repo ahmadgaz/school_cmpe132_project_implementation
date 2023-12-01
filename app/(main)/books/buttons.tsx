@@ -1,10 +1,9 @@
 'use client';
 
 import { BookType, UserType } from '@/lib/definitions';
-import { deleteBook, saveRequest } from '@/lib/actions';
+import { saveRequest } from '@/lib/actions';
 import React from 'react';
 import { LoadingSpinner } from '@/app/ui/skeletons';
-import { TrashIcon } from '@heroicons/react/24/outline';
 
 /**
  * Button states:
@@ -20,9 +19,11 @@ import { TrashIcon } from '@heroicons/react/24/outline';
 export function RequestButton({
   book,
   user,
+  token,
 }: {
   book: BookType;
   user?: UserType;
+  token?: string;
 }) {
   const [loading, setLoading] = React.useState<boolean>(false);
   const [error, setError] = React.useState<string>('');
@@ -31,7 +32,7 @@ export function RequestButton({
     setLoading(true);
     setError('');
     try {
-      await saveRequest(book);
+      await saveRequest(book, token);
     } catch (error) {
       console.error(error);
       setError((error as Error).message ?? 'Failed to sign in.');
@@ -103,46 +104,6 @@ export function RequestButton({
           )}
         </div>
       )}
-    </>
-  );
-}
-
-export function DeleteButton({ id }: { id: string }) {
-  const [loading, setLoading] = React.useState<boolean>(false);
-  const [error, setError] = React.useState<string>('');
-
-  const handleClick = async () => {
-    setLoading(true);
-    setError('');
-    try {
-      await deleteBook(id);
-    } catch (error) {
-      console.error(error);
-      setError((error as Error).message ?? 'Failed to sign in.');
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  return (
-    <>
-      <div className="flex h-full flex-col items-end justify-center gap-1 pt-2">
-        <button
-          onClick={handleClick}
-          className="text-danger-light animation flex w-fit items-center gap-2 font-semibold hover:underline hover:opacity-60"
-          disabled={Boolean(loading)}
-          aria-disabled={Boolean(loading)}
-        >
-          {loading && <LoadingSpinner />} <TrashIcon className="h-5 w-5" />{' '}
-          {!loading && 'Delete book'}
-        </button>
-
-        {error && (
-          <p className="text-danger-light whitespace-nowrap text-[12px] font-semibold italic">
-            {error}
-          </p>
-        )}
-      </div>
     </>
   );
 }
