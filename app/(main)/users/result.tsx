@@ -1,7 +1,6 @@
 'use client';
 
-import { BookType, UserType } from '@/app/lib/definitions';
-import { RequestButton } from './buttons';
+import { UserType } from '@/app/lib/definitions';
 import { usePathname } from 'next/navigation';
 import { PendingPathnameContext } from '@/app/state/pathnameState';
 import React from 'react';
@@ -9,12 +8,10 @@ import clsx from 'clsx';
 import Link from 'next/link';
 
 export default function Result({
-  book,
   user,
   href,
 }: {
-  book: BookType;
-  user?: UserType;
+  user: UserType;
   href: string;
 }) {
   const pathname = usePathname();
@@ -45,16 +42,20 @@ export default function Result({
           },
         )}
       >
-        <hgroup className="flex h-fit flex-col gap-1">
+        <hgroup className="flex h-fit flex-col gap-1 leading-3">
           <h1 className="text-text-black text-[24px] font-semibold leading-6">
-            {book.title}
+            {user.username}
           </h1>
-          <p className="text-text-gray text-[12px] font-semibold">
-            by {book.author}
+          {user.books && user.books.length > 1 && (
+            <p className="text-text-gray text-[12px] font-semibold">
+              Borrows {user.books.length} books
+            </p>
+          )}
+          <p className="text-text-gray text-[10px] uppercase italic">
+            {user.role}
           </p>
         </hgroup>
       </Link>
-      <RequestButton book={book} user={user} />
     </li>
   );
 }

@@ -6,9 +6,9 @@ export type UserAuthType = {
 };
 
 export type UserType = Omit<UserAuthType, 'password'> & {
-  logids: string[];
-  bookids: string[];
-  requestids: string[];
+  logs?: string[];
+  books?: string[];
+  requests?: string[];
 };
 
 export type CreateBookType = Omit<BookType, 'id' | 'borrowed' | 'requested'>;
@@ -27,33 +27,42 @@ export type LogType = {
   createdat: Date;
   permission: string;
   userid: string;
+  username: string;
+  affecteduser?: UserType;
+  newuser?: UserType;
+  affecteduserid?: string;
+  affectedbook?: BookType;
+  newbook?: BookType;
+  affectedbookid?: string;
+  affectedrequest?: RequestType;
+  affectedrequestid?: string;
 };
 
 export type RequestType = {
   id: string;
   requestname: 'REQUEST_BOOK' | 'RETURN_BOOK';
   userid: string;
+  username: string;
   bookid: string;
+  booktitle: string;
 };
 
 export type WritepermissionnameType =
-  | 'DELETE_BOOK' // ADMIN
-  | 'UPDATE_BOOK' // ADMIN
-  | 'CREATE_BOOK' // ADMIN
-  | 'CHECKIN_BOOK' // ADMIN
-  | 'CHECKOUT_BOOK' // ADMIN
-  | 'ADD_USER' // ADMIN
-  | 'DELETE_USER' // ADMIN
-  | 'RETURN_BOOK' // USER & ADMIN
-  | 'REVOKE_RETURN_BOOK' // USER & ADMIN
-  | 'REQUEST_BOOK' // USER & ADMIN
-  | 'REVOKE_REQUEST_BOOK' // USER & ADMIN
-  | 'UPDATE_PROFILE' // USER
-  | 'DELETE_PROFILE' // USER
-  | 'REGISTERED'; // USER -> Technically Guest, but this permission only gets logged when a Guest registers.
-export type ReadpermissionnameType =
-  | 'VIEW_LOGS' // ADMIN
-  | 'VIEW_USER'; // ADMIN
+  | 'DELETE_BOOK'
+  | 'UPDATE_BOOK'
+  | 'CREATE_BOOK'
+  | 'CHECKIN_BOOK'
+  | 'CHECKOUT_BOOK'
+  | 'ADD_USER'
+  | 'DELETE_USER'
+  | 'RETURN_BOOK'
+  | 'REVOKE_RETURN_BOOK'
+  | 'REQUEST_BOOK'
+  | 'REVOKE_REQUEST_BOOK'
+  | 'UPDATE_PROFILE'
+  | 'DELETE_PROFILE'
+  | 'REGISTERED';
+export type ReadpermissionnameType = 'VIEW_USER';
 
 export type PermissionType = {
   permissionname: WritepermissionnameType | ReadpermissionnameType;

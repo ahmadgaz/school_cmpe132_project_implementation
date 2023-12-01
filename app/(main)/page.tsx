@@ -68,8 +68,8 @@ export default function Page() {
         <Image
           className="max-lg:hidden"
           src="/hero-2.png"
-          width={300}
-          height={300}
+          width={400}
+          height={400}
           alt="hero-graphic"
           quality={100}
         />

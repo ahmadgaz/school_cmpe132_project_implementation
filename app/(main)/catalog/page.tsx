@@ -4,7 +4,7 @@ import { Metadata } from 'next';
 import React from 'react';
 import Await from '@/app/lib/utils';
 import { BookType, UserType } from '@/app/lib/definitions';
-import read from '@/app/lib/read';
+import api from '@/app/lib/api';
 import Result from './result';
 import Pagination from './pagination';
 import PathnameState from '@/app/state/pathnameState';
@@ -23,7 +23,7 @@ export default async function Page({
   };
 }) {
   const promise: Promise<{ books: BookType[]; user?: UserType }> =
-    read.fetchCatalog(searchParams?.query, Number(searchParams?.page));
+    api.fetchCatalog(searchParams?.query, Number(searchParams?.page));
   return (
     <main className="relative flex flex-col items-center gap-5 px-3 pb-10">
       {/* Header */}

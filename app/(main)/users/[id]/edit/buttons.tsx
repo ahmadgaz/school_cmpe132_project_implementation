@@ -1,7 +1,7 @@
 'use client';
 
 import { BookType, UserType } from '@/app/lib/definitions';
-import { deleteBook, saveRequest } from '@/app/lib/actions';
+import { deleteUser, saveRequest } from '@/app/lib/actions';
 import React from 'react';
 import { LoadingSpinner } from '@/app/ui/skeletons';
 import { TrashIcon } from '@heroicons/react/24/outline';
@@ -115,7 +115,7 @@ export function DeleteButton({ id }: { id: string }) {
     setLoading(true);
     setError('');
     try {
-      await deleteBook(id);
+      await deleteUser(id);
     } catch (error) {
       console.error(error);
       setError((error as Error).message ?? 'Failed to sign in.');
@@ -134,7 +134,7 @@ export function DeleteButton({ id }: { id: string }) {
           aria-disabled={Boolean(loading)}
         >
           {loading && <LoadingSpinner />} <TrashIcon className="h-5 w-5" />{' '}
-          {!loading && 'Delete book'}
+          {!loading && 'Delete user'}
         </button>
 
         {error && (

@@ -3,12 +3,18 @@
 import { z } from 'zod';
 import { revalidatePath } from 'next/cache';
 import { redirect } from 'next/navigation';
-import { BookType, UserAuthType, UserType } from './definitions';
-import { unstable_noStore as noStore } from 'next/cache';
-import { signIn } from '@/auth';
+import { BookType, RequestType, UserAuthType, UserType } from './definitions';
 import { cookies } from 'next/headers';
+import jwt from 'jsonwebtoken';
 import { jwtVerify } from 'jose';
 import queries from './queries';
+import bcrypt from 'bcrypt';
+import api from './api';
+
+type NeonDbError = {
+  code: string;
+  sourceError: string;
+};
 
 const UserAuthSchema = z.object({
   id: z.string().uuid(),
@@ -19,6 +25,39 @@ const UserAuthSchema = z.object({
 
 const UserAuth = UserAuthSchema.omit({ id: true, role: true });
 
+async function getUser(username: string): Promise<UserAuthType | undefined> {
+  try {
+    return await api.fetchUserByUsername(username);
+  } catch (error) {
+    console.error(error);
+    throw new Error('Failed to fetch user.');
+  }
+}
+
+export const signIn = async (
+  credentials: Omit<UserAuthType, 'id' | 'role'>,
+) => {
+  try {
+    const { username, password } = credentials;
+    const user = await getUser(username);
+    if (!user) throw new Error('User does not exist!');
+
+    const passwordsMatch = await bcrypt.compare(password, user.password);
+    if (!passwordsMatch) throw new Error('Invalid credentials!');
+
+    const jti = crypto.randomUUID();
+    const token = jwt.sign(
+      { id: user.id, role: user.role, username, jti },
+      String(process.env.AUTH_SECRET),
+    );
+
+    return token;
+  } catch (error) {
+    console.error(error);
+    throw error as Error;
+  }
+};
+
 export async function authenticate(
   prevState: string | undefined,
   formData: FormData,
@@ -28,15 +67,25 @@ export async function authenticate(
     const validatedFields = UserAuth.safeParse(Object.fromEntries(formData));
     if (!validatedFields.success)
       throw new Error(
-        Object.values(validatedFields.error.flatten().fieldErrors).join('\n'),
+        validatedFields.error.errors.map((error) => error.message).join('\n'),
       );
 
-    token = await signIn(validatedFields.data as UserAuthType);
+    token = await signIn(
+      validatedFields.data as Omit<UserAuthType, 'id' | 'role'>,
+    );
   } catch (error) {
     console.error(error);
-    return (error as Error).message ?? 'Failed to sign in.';
+    return String(error) || 'Failed to sign in.';
   }
-  redirect('/book/?token=' + token);
+  cookies().set({
+    name: '_session',
+    value: token,
+    path: '/',
+    secure: true,
+    httpOnly: true,
+    sameSite: 'lax',
+  });
+  redirect('/books');
 }
 
 async function queryHelper<Arguments, ReturnValue>(queries: {
@@ -80,7 +129,7 @@ async function queryHelper<Arguments, ReturnValue>(queries: {
     else throw new Error('Invalid role.');
   } catch (error) {
     console.error(error);
-    throw error as Error;
+    throw String(error) || 'Failed to perform action.';
   }
 }
 
@@ -102,23 +151,22 @@ export async function createBook(
   prevState: string | undefined,
   formData: FormData,
 ) {
-  noStore();
   try {
     const validatedFields = CreateBook.safeParse(Object.fromEntries(formData));
     if (!validatedFields.success)
       throw new Error(
-        Object.values(validatedFields.error.flatten().fieldErrors).join('\n'),
+        validatedFields.error.errors.map((error) => error.message).join('\n'),
       );
 
-    await queryHelper<{ validatedFields: BookType }, void>({
-      args: { validatedFields: validatedFields.data as BookType },
+    await queryHelper<{ validatedFields: Omit<BookType, 'id'> }, void>({
+      args: { validatedFields: validatedFields.data },
       adminQuery: async function (args, user) {
         await queries.admin.createBook(args.validatedFields, user);
       },
     });
   } catch (error) {
     console.error('Database Error:', error);
-    return (error as Error).message ?? 'Failed to add book.';
+    return String(error) || 'Failed to add book.';
   }
   revalidatePath('/logs');
   revalidatePath('/catalog');
@@ -134,31 +182,50 @@ export async function updateBook(
   prevState: string | undefined,
   formData: FormData,
 ) {
-  noStore();
   try {
     const validatedFields = UpdateBook.safeParse(Object.fromEntries(formData));
     if (!validatedFields.success)
       throw new Error(
-        Object.values(validatedFields.error.flatten().fieldErrors).join('\n'),
+        validatedFields.error.errors.map((error) => error.message).join('\n'),
       );
 
     await queryHelper<{ validatedFields: BookType }, void>({
       args: { validatedFields: validatedFields.data as BookType },
       adminQuery: async function (args, user) {
-        await queries.admin.editBook(args.validatedFields, user);
+        await queries.admin.updateBook(args.validatedFields, user);
       },
     });
   } catch (error) {
     console.error('Database Error:', error);
-    return (error as Error).message ?? 'Failed to add book.';
+    return String(error) || 'Failed to update book.';
   }
   revalidatePath('/logs');
+  revalidatePath('/books');
+  revalidatePath('/requests');
+  revalidatePath('/catalog');
+  redirect('/catalog');
+}
+
+export async function deleteBook(id: string) {
+  try {
+    await queryHelper<{ id: string }, void>({
+      args: { id },
+      adminQuery: async function (args, user) {
+        await queries.admin.deleteBook(args.id, user);
+      },
+    });
+  } catch (error) {
+    console.error('Database Error:', error);
+    throw (error as Error).message || 'Failed to delete book.';
+  }
+  revalidatePath('/logs');
+  revalidatePath('/books');
+  revalidatePath('/requests');
   revalidatePath('/catalog');
   redirect('/catalog');
 }
 
 export async function saveRequest(book: BookType) {
-  noStore();
   try {
     await queryHelper<{ book: BookType }, void>({
       args: { book },
@@ -171,42 +238,229 @@ export async function saveRequest(book: BookType) {
     });
   } catch (error) {
     console.error(error);
-    return (error as Error).message ?? 'Failed to save request.';
+    throw String(error) || 'Failed to save request.';
   }
   revalidatePath('/logs');
   revalidatePath('/catalog');
+  revalidatePath('/requests');
+  revalidatePath('/requests');
 }
 
-// const UpdateInvoice = FormSchema.omit({ id: true, date: true });
+const UpdateProfile = UserAuthSchema.omit({ id: true, role: true })
+  .extend({ confirmPassword: z.string().min(1).max(255) })
+  .superRefine(({ confirmPassword, password }, ctx) => {
+    if (confirmPassword !== password) {
+      ctx.addIssue({
+        code: 'custom',
+        message: 'The passwords did not match',
+      });
+    }
+  });
 
-// export async function updateInvoice(id: string, formData: FormData) {
-//   const { customerId, amount, status } = UpdateInvoice.parse({
-//     customerId: formData.get('customerId'),
-//     amount: formData.get('amount'),
-//     status: formData.get('status'),
-//   });
+export async function updateProfile(
+  prevState: string | undefined,
+  formData: FormData,
+) {
+  try {
+    const validatedFields = UpdateProfile.safeParse(
+      Object.fromEntries(formData),
+    );
+    if (!validatedFields.success)
+      throw new Error(
+        validatedFields.error.errors.map((error) => error.message).join('\n'),
+      );
+    await queryHelper<
+      {
+        validatedFields: Omit<UserAuthType, 'id' | 'role'> & {
+          confirmPassword: string;
+        };
+      },
+      void
+    >({
+      args: { validatedFields: validatedFields.data },
+      userQuery: async function (args, user) {
+        const salt = await bcrypt.genSalt(10);
+        const hashedPassword = await bcrypt.hash(
+          args.validatedFields.password,
+          salt,
+        );
+        await queries.user.updateProfile({
+          id: user.id,
+          username: args.validatedFields.username,
+          password: hashedPassword,
+          role: user.role,
+        });
+      },
+    });
+  } catch (error) {
+    console.error('Database Error:', error);
+    return String(error) || 'Failed to update user.';
+  }
+  revalidatePath('/logs');
+  revalidatePath('/profile');
+  revalidatePath('/users');
+  revalidatePath('/catalog');
+  revalidatePath('/requests');
+  revalidatePath('/books');
+}
 
-//   const amountInCents = amount * 100;
+const AddUser = UserAuthSchema.omit({ id: true })
+  .extend({ confirmPassword: z.string().min(1).max(255) })
+  .superRefine(({ confirmPassword, password }, ctx) => {
+    if (confirmPassword !== password) {
+      ctx.addIssue({
+        code: 'custom',
+        message: 'The passwords did not match',
+      });
+    }
+  });
 
-//   await sql`
-//         UPDATE invoices
-//         SET customer_id = ${customerId}, amount = ${amountInCents}, status = ${status}
-//         WHERE id = ${id}
-//     `;
+export async function addUser(
+  prevState: string | undefined,
+  formData: FormData,
+) {
+  let role;
+  let user;
+  try {
+    if (typeof formData.get('role') !== 'string') {
+      formData.set('role', 'USER');
+    }
+    const validatedFields = AddUser.safeParse(Object.fromEntries(formData));
+    if (!validatedFields.success)
+      throw new Error(
+        validatedFields.error.errors.map((error) => error.message).join('\n'),
+      );
+    role = await queryHelper<
+      {
+        validatedFields: Omit<UserAuthType, 'id'> & {
+          confirmPassword: string;
+        };
+      },
+      string
+    >({
+      args: { validatedFields: validatedFields.data },
+      guestQuery: async function (args) {
+        const salt = await bcrypt.genSalt(10);
+        const hashedPassword = await bcrypt.hash(
+          args.validatedFields.password,
+          salt,
+        );
+        await queries.guest.register(
+          args.validatedFields.username,
+          hashedPassword,
+        );
+        user = {
+          username: args.validatedFields.username,
+          password: args.validatedFields.password,
+        };
+        return 'USER';
+      },
+      adminQuery: async function (args, user) {
+        const salt = await bcrypt.genSalt(10);
+        const hashedPassword = await bcrypt.hash(
+          args.validatedFields.password,
+          salt,
+        );
+        await queries.admin.addUser(
+          user,
+          args.validatedFields.username,
+          hashedPassword,
+          args.validatedFields.role,
+        );
+        return user.role;
+      },
+    });
+  } catch (error) {
+    console.error('Database Error:', error);
+    if ((error as NeonDbError).code === '23505')
+      return 'Username already exists.';
+    else return String(error) || 'Failed to add user.';
+  }
+  if (role === 'ADMIN') {
+    revalidatePath('/logs');
+    revalidatePath('/users');
+    redirect('/users');
+  } else {
+    if (user) {
+      const token = await signIn(user as Omit<UserAuthType, 'id' | 'role'>);
+      cookies().set({
+        name: '_session',
+        value: token,
+        path: '/',
+        secure: true,
+        httpOnly: true,
+        sameSite: 'lax',
+      });
+    }
+    redirect('/books');
+  }
+}
 
-//   revalidatePath('/dashboard/invoices');
-//   redirect('/dashboard/invoices');
-// }
+export async function deleteUser(id: string) {
+  let role;
+  try {
+    role = await queryHelper<{ id: string }, string>({
+      args: { id },
+      userQuery: async function (args, user) {
+        await queries.user.deleteProfile(args.id, user);
+        return user.role;
+      },
+      adminQuery: async function (args, user) {
+        if (user.id === args.id) throw new Error('You cannot delete yourself.');
+        await queries.admin.deleteUser(args.id, user);
+        return user.role;
+      },
+    });
+  } catch (error) {
+    console.error('Database Error:', error);
+    throw String(error) || 'Failed to delete user.';
+  }
+  if (role === 'ADMIN') {
+    revalidatePath('/logs');
+    revalidatePath('/requests');
+    revalidatePath('/catalog');
+    revalidatePath('/users');
+    redirect('/users');
+  } else {
+    cookies().delete('_session');
+    redirect('/');
+  }
+}
 
-// export async function deleteInvoice(id: string) {
-//   throw new Error('Failed to Delete Invoice');
+export async function acceptRequest(request: RequestType) {
+  try {
+    await queryHelper<{ request: RequestType }, void>({
+      args: { request },
+      adminQuery: async function (args, user) {
+        await queries.admin.acceptRequest(args.request, user);
+      },
+    });
+  } catch (error) {
+    console.error(error);
+    throw String(error) || 'Failed to accept request.';
+  }
+  revalidatePath('/logs');
+  revalidatePath('/requests');
+  revalidatePath('/catalog');
+  revalidatePath('/books');
+  redirect('/requests');
+}
 
-//   // Unreachable code block
-//   try {
-//     await sql`DELETE FROM invoices WHERE id = ${id}`;
-//     revalidatePath('/dashboard/invoices');
-//     return { message: 'Deleted Invoice' };
-//   } catch (error) {
-//     return { message: 'Database Error: Failed to Delete Invoice' };
-//   }
-// }
+export async function denyRequest(request: RequestType) {
+  try {
+    await queryHelper<{ request: RequestType }, void>({
+      args: { request },
+      adminQuery: async function (args, user) {
+        await queries.admin.denyRequest(args.request, user);
+      },
+    });
+  } catch (error) {
+    console.error(error);
+    throw String(error) || 'Failed to reject request.';
+  }
+  revalidatePath('/logs');
+  revalidatePath('/requests');
+  revalidatePath('/catalog');
+  revalidatePath('/books');
+  redirect('/requests');
+}

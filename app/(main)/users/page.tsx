@@ -7,9 +7,11 @@ import { BookType, UserType } from '@/app/lib/definitions';
 import api from '@/app/lib/api';
 import Result from './result';
 import Pagination from './pagination';
+import PathnameState from '@/app/state/pathnameState';
+import NavButton from '@/app/ui/navbutton';
 
 export const metadata: Metadata = {
-  title: 'My Books',
+  title: 'Users',
 };
 
 export default async function Page({
@@ -20,8 +22,10 @@ export default async function Page({
     page?: string;
   };
 }) {
-  const promise: Promise<{ books: BookType[]; user?: UserType }> =
-    api.fetchBooks(searchParams?.query, Number(searchParams?.page));
+  const promise: Promise<{ users?: UserType[] }> = api.fetchUsers(
+    searchParams?.query,
+    Number(searchParams?.page),
+  );
   return (
     <main className="relative flex flex-col items-center gap-5 px-3 pb-10">
       {/* Header */}
@@ -29,10 +33,17 @@ export default async function Page({
         <div className="flex w-full flex-col gap-5 ">
           <div className="flex justify-between">
             <h1 className="text-text-black text-[28px] font-semibold max-lg:text-center">
-              My Books
+              Users
             </h1>
+            <PathnameState>
+              <NavButton
+                className="button-primary w-fit"
+                name="Add User"
+                href="/users/add"
+              />
+            </PathnameState>
           </div>
-          <Search placeholder="Search books..." />
+          <Search placeholder="Search users..." />
         </div>
       </header>
 
@@ -44,15 +55,21 @@ export default async function Page({
         <div className="border-accent-light flex w-full flex-col gap-6 border-b-[1px] max-lg:items-center">
           <React.Suspense fallback={<TableSkeleton />}>
             <Await promise={promise}>
-              {(books) => (
+              {(users) => (
                 <ul>
-                  {books?.books.map((book, i) => (
-                    <Result key={i} book={book} user={books?.user} />
-                  ))}
-                  {!books?.books.length && (
+                  <PathnameState>
+                    {users?.users?.map((user, i) => (
+                      <Result
+                        key={i}
+                        href={`/users/${user.id}/edit`}
+                        user={user}
+                      />
+                    ))}
+                  </PathnameState>
+                  {!users?.users?.length && (
                     <li className="flex h-[85px] flex-col justify-center gap-1 pt-3">
                       <h1 className="text-text-gray h-8 text-center text-[24px] font-semibold italic">
-                        Check out our catalog!
+                        There are no other users in the database.
                       </h1>
                     </li>
                   )}

@@ -10,18 +10,19 @@ export default async function auth(request: NextRequest) {
       return response;
     }
     let token = request.cookies.get('_session')?.value;
-    const isLoggingInToken = request.nextUrl.searchParams.get('token');
-    if (isLoggingInToken) token = isLoggingInToken;
     const isOnGuestRoutes =
       request.nextUrl.pathname === '/' ||
       request.nextUrl.pathname.startsWith('/login') ||
       request.nextUrl.pathname.startsWith('/signup');
-    const isOnProtectedRoute =
+    const isOnProtectedUserRoutes =
       request.nextUrl.pathname.startsWith('/books') ||
-      request.nextUrl.pathname.startsWith('/profile') ||
+      request.nextUrl.pathname.startsWith('/profile');
+    const isOnProtectedAdminRoutes =
       request.nextUrl.pathname.startsWith('/users') ||
       request.nextUrl.pathname.startsWith('/requests') ||
       request.nextUrl.pathname.startsWith('/logs');
+    const isOnProtectedRoute =
+      isOnProtectedUserRoutes || isOnProtectedAdminRoutes;
     if (!token && isOnProtectedRoute)
       return Response.redirect(new URL('/login', request.nextUrl));
     if (!token && !isOnProtectedRoute) return; // Continue to next URL
@@ -35,18 +36,9 @@ export default async function auth(request: NextRequest) {
     if (!verified && isOnProtectedRoute)
       return Response.redirect(new URL('/login', request.nextUrl));
     if (!verified && !isOnProtectedRoute) return; // Continue to next URL
-    if (verified && isLoggingInToken) {
-      const response = NextResponse.next();
-      response.cookies.set({
-        name: '_session',
-        value: isLoggingInToken,
-        path: '/',
-        secure: true,
-        httpOnly: true,
-        sameSite: 'lax',
-      });
-      return response;
-    } else if (verified && isOnGuestRoutes)
+    if (verified && isOnGuestRoutes)
+      return Response.redirect(new URL('/books', request.nextUrl));
+    if (verified && verified.role === 'USER' && isOnProtectedAdminRoutes)
       return Response.redirect(new URL('/books', request.nextUrl));
     return; // Continue to next URL
   } catch (error) {

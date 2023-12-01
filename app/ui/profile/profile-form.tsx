@@ -3,13 +3,11 @@
 import { useFormState, useFormStatus } from 'react-dom';
 import { LoadingSpinner } from '../skeletons';
 import { ExclamationCircleIcon } from '@heroicons/react/24/outline';
-import { BookType } from '@/app/lib/definitions';
-import { updateBook } from '@/app/lib/actions';
-import PathnameState from '@/app/state/pathnameState';
-import NavButton from '../navbutton';
+import { UserType } from '@/app/lib/definitions';
+import { updateProfile } from '@/app/lib/actions';
 
-export default function Form({ book }: { book: BookType }) {
-  const [state, dispatch] = useFormState(updateBook, undefined);
+export default function Form({ user }: { user: UserType }) {
+  const [state, dispatch] = useFormState(updateProfile, undefined);
 
   return (
     <form action={dispatch}>
@@ -19,10 +17,10 @@ export default function Form({ book }: { book: BookType }) {
         </h1>
 
         <div className="w-full pb-6">
-          {/* Book Id */}
+          {/* User Id */}
           <div>
             <label className="label" hidden htmlFor="id">
-              Book Id
+              User Id
             </label>
             <div className="relative">
               <input
@@ -32,46 +30,63 @@ export default function Form({ book }: { book: BookType }) {
                 type="id"
                 name="id"
                 placeholder="Enter your id"
-                defaultValue={book.id}
+                defaultValue={user.id}
                 readOnly
                 required
               />
             </div>
           </div>
 
-          {/* Book Title */}
+          {/* Username */}
           <div>
-            <label className="label" htmlFor="title">
-              Book Title
+            <label className="label" htmlFor="username">
+              Username
             </label>
             <div className="relative">
               <input
                 maxLength={255}
                 className="input peer"
-                id="title"
-                type="title"
-                name="title"
-                placeholder="Enter your title"
-                defaultValue={book.title}
+                id="username"
+                type="username"
+                name="username"
+                placeholder="Enter your username"
+                defaultValue={user.username}
                 required
               />
             </div>
           </div>
 
-          {/* Book Author */}
+          {/* Password */}
           <div>
-            <label className="label" htmlFor="author">
-              Book Author
+            <label className="label" htmlFor="password">
+              Password
             </label>
             <div className="relative">
               <input
                 maxLength={255}
                 className="input peer border-0"
-                id="author"
-                type="author"
-                name="author"
-                placeholder="Enter your author"
-                defaultValue={book.author}
+                id="password"
+                type="password"
+                name="password"
+                placeholder="Enter your password"
+                required
+              />
+            </div>
+          </div>
+
+          {/* Confirm Password */}
+          <div>
+            <label className="label" htmlFor="confirmPassword">
+              Confirm Password
+            </label>
+            <div className="relative">
+              <input
+                maxLength={255}
+                className="input peer border-0"
+                id="confirmPassword"
+                type="password"
+                name="confirmPassword"
+                placeholder="Confirm your password"
                 required
               />
             </div>
@@ -80,13 +95,6 @@ export default function Form({ book }: { book: BookType }) {
 
         {/* Action */}
         <div className="flex flex-wrap items-center justify-between gap-2">
-          <PathnameState>
-            <NavButton
-              className="button-secondary flex-1"
-              name="Cancel"
-              href="/catalog"
-            />
-          </PathnameState>
           <SubmitButton />
         </div>
         <div
@@ -111,7 +119,7 @@ function SubmitButton() {
 
   return (
     <button
-      className="button-primary flex-1"
+      className="button-tertiary flex-1"
       disabled={pending}
       aria-disabled={pending}
     >

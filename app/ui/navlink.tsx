@@ -26,7 +26,7 @@ export default function NavLink({
       if (pendingPathname === href) {
         setPendingPathname(pathname);
       }
-    }, 10000);
+    }, 5000);
     return () => clearTimeout(timeout);
   }, [href, pendingPathname, pathname, setPendingPathname]);
 

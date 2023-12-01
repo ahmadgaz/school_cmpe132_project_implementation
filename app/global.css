@@ -21,6 +21,9 @@
   .button-tertiary {
     @apply animation text-background-light bg-text-black hover:text-background-light flex h-[40px] items-center justify-center gap-2 rounded-xl px-5 text-[16px] font-bold hover:bg-slate-500 active:border-transparent active:bg-slate-300;
   }
+  .button-danger {
+    @apply animation text-background-light bg-danger-light hover:text-background-light flex h-[40px] items-center justify-center gap-2 rounded-xl px-5 text-[16px] font-bold hover:opacity-80 active:border-transparent active:opacity-30;
+  }
   .input {
     @apply placeholder:text-text-gray bg-input-light block w-full rounded-xl py-[9px] pl-4 text-sm outline-2;
   }

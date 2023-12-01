@@ -3,13 +3,13 @@ import { TableSkeleton } from '@/app/ui/skeletons';
 import { Metadata } from 'next';
 import React from 'react';
 import Await from '@/app/lib/utils';
-import { BookType, UserType } from '@/app/lib/definitions';
+import { LogType } from '@/app/lib/definitions';
 import api from '@/app/lib/api';
 import Result from './result';
 import Pagination from './pagination';
 
 export const metadata: Metadata = {
-  title: 'My Books',
+  title: 'Logs',
 };
 
 export default async function Page({
@@ -20,8 +20,10 @@ export default async function Page({
     page?: string;
   };
 }) {
-  const promise: Promise<{ books: BookType[]; user?: UserType }> =
-    api.fetchBooks(searchParams?.query, Number(searchParams?.page));
+  const promise: Promise<LogType[]> = api.fetchLogs(
+    searchParams?.query,
+    Number(searchParams?.page),
+  );
   return (
     <main className="relative flex flex-col items-center gap-5 px-3 pb-10">
       {/* Header */}
@@ -29,10 +31,10 @@ export default async function Page({
         <div className="flex w-full flex-col gap-5 ">
           <div className="flex justify-between">
             <h1 className="text-text-black text-[28px] font-semibold max-lg:text-center">
-              My Books
+              Logs
             </h1>
           </div>
-          <Search placeholder="Search books..." />
+          <Search placeholder="Search logs..." />
         </div>
       </header>
 
@@ -44,15 +46,13 @@ export default async function Page({
         <div className="border-accent-light flex w-full flex-col gap-6 border-b-[1px] max-lg:items-center">
           <React.Suspense fallback={<TableSkeleton />}>
             <Await promise={promise}>
-              {(books) => (
+              {(logs) => (
                 <ul>
-                  {books?.books.map((book, i) => (
-                    <Result key={i} book={book} user={books?.user} />
-                  ))}
-                  {!books?.books.length && (
+                  {logs?.map((log, i) => <Result key={i} log={log} />)}
+                  {!logs?.length && (
                     <li className="flex h-[85px] flex-col justify-center gap-1 pt-3">
                       <h1 className="text-text-gray h-8 text-center text-[24px] font-semibold italic">
-                        Check out our catalog!
+                        No logs.
                       </h1>
                     </li>
                   )}

@@ -9,11 +9,13 @@ export default function NavButton({
   className,
   name,
   href,
+  onClick,
   ...props
 }: {
   className?: string;
   name: string;
-  href: string;
+  href?: string;
+  onClick?: () => void;
   props?: React.ButtonHTMLAttributes<HTMLButtonElement>;
 }) {
   const pathname = usePathname();
@@ -27,7 +29,7 @@ export default function NavButton({
       if (pendingPathname === href) {
         setPendingPathname(pathname);
       }
-    }, 10000);
+    }, 5000);
     return () => clearTimeout(timeout);
   }, [href, pendingPathname, pathname, setPendingPathname]);
 
@@ -42,7 +44,7 @@ export default function NavButton({
       <button
         tabIndex={-1}
         className="flex h-full w-full items-center justify-center"
-        onClick={() => href && setPendingPathname(href)}
+        onClick={() => (href ? setPendingPathname(href) : onClick?.())}
         disabled={pendingPathname === href && !pathnameLoaded}
         {...props}
       >
