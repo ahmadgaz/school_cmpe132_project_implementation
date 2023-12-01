@@ -21,6 +21,8 @@ export default async function auth(request: NextRequest) {
       request.nextUrl.pathname.startsWith('/users') ||
       request.nextUrl.pathname.startsWith('/requests') ||
       request.nextUrl.pathname.startsWith('/logs');
+    const isOnNonAdminRoutes =
+      isOnGuestRoutes || request.nextUrl.pathname.startsWith('/profile');
     const isOnProtectedRoute =
       isOnProtectedUserRoutes || isOnProtectedAdminRoutes;
     if (!token && isOnProtectedRoute)
@@ -36,7 +38,10 @@ export default async function auth(request: NextRequest) {
     if (!verified && isOnProtectedRoute)
       return Response.redirect(new URL('/login', request.nextUrl));
     if (!verified && !isOnProtectedRoute) return; // Continue to next URL
-    if (verified && isOnGuestRoutes)
+    if (
+      (verified && isOnGuestRoutes) ||
+      (verified.role === 'ADMIN' && isOnNonAdminRoutes)
+    )
       return Response.redirect(new URL('/books', request.nextUrl));
     if (verified && verified.role === 'USER' && isOnProtectedAdminRoutes)
       return Response.redirect(new URL('/books', request.nextUrl));

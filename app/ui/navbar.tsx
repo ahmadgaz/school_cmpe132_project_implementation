@@ -95,9 +95,6 @@ export default async function Navbar({ token }: { token?: string }) {
                 <NavLink name={links[5].name} href={links[5].href} />
               </li>
               <li className="flex h-full items-center">
-                <NavLink name={links[6].name} href={links[6].href} />
-              </li>
-              <li className="flex h-full items-center">
                 <NavLink name={links[7].name} href={links[7].href} />
               </li>
               <li className="flex h-full items-center">
