@@ -3,7 +3,7 @@ import NavLink from '@/app/ui/navlink';
 import Logo from '@/app/ui/logo';
 import PathnameState from '../state/pathnameState';
 import NavButton from './navbutton';
-import api from '../lib/api';
+import api from '@/lib/api';
 
 const links = [
   { name: 'Log in', href: '/login' },

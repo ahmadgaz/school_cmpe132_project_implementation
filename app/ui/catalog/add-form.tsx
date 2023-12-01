@@ -5,7 +5,7 @@ import { LoadingSpinner } from '../skeletons';
 import { ExclamationCircleIcon } from '@heroicons/react/24/outline';
 import PathnameState from '@/app/state/pathnameState';
 import NavButton from '../navbutton';
-import { createBook } from '@/app/lib/actions';
+import { createBook } from '@/lib/actions';
 
 export default function Form() {
   const [state, dispatch] = useFormState(createBook, undefined);

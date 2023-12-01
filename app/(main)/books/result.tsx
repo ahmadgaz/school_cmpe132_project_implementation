@@ -1,4 +1,4 @@
-import { BookType, UserType } from '@/app/lib/definitions';
+import { BookType, UserType } from '@/lib/definitions';
 import { RequestButton } from './buttons';
 
 export default function Result({

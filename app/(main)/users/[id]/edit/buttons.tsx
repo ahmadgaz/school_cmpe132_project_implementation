@@ -1,7 +1,7 @@
 'use client';
 
-import { BookType, UserType } from '@/app/lib/definitions';
-import { deleteUser, saveRequest } from '@/app/lib/actions';
+import { BookType, UserType } from '@/lib/definitions';
+import { deleteUser, saveRequest } from '@/lib/actions';
 import React from 'react';
 import { LoadingSpinner } from '@/app/ui/skeletons';
 import { TrashIcon } from '@heroicons/react/24/outline';

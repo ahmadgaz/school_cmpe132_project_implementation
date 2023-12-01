@@ -1,6 +1,6 @@
 'use client';
 
-import { deleteUser } from '@/app/lib/actions';
+import { deleteUser } from '@/lib/actions';
 import React from 'react';
 import { LoadingSpinner } from '@/app/ui/skeletons';
 import { TrashIcon } from '@heroicons/react/24/outline';

@@ -1,6 +1,6 @@
 'use client';
 
-import { UserType } from '@/app/lib/definitions';
+import { UserType } from '@/lib/definitions';
 import { usePathname } from 'next/navigation';
 import { PendingPathnameContext } from '@/app/state/pathnameState';
 import React from 'react';

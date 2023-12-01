@@ -1,4 +1,4 @@
-import { RequestType } from '@/app/lib/definitions';
+import { RequestType } from '@/lib/definitions';
 import { AcceptButton, DenyButton } from './buttons';
 
 export default function Result({ request }: { request: RequestType }) {

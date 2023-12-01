@@ -1,7 +1,7 @@
 import { Metadata } from 'next';
 import React from 'react';
 import Form from '@/app/ui/profile/profile-form';
-import api from '@/app/lib/api';
+import api from '@/lib/api';
 import { notFound } from 'next/navigation';
 import { DeleteButton } from './buttons';
 

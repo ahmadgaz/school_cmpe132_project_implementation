@@ -1,5 +1,5 @@
 import PaginationButtons from '@/app/ui/pagination';
-import api from '@/app/lib/api';
+import api from '@/lib/api';
 
 export default async function Pagination({ query }: { query: string }) {
   const totalPages = await api.fetchCatalogPages(query);

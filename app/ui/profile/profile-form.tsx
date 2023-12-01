@@ -3,8 +3,8 @@
 import { useFormState, useFormStatus } from 'react-dom';
 import { LoadingSpinner } from '../skeletons';
 import { ExclamationCircleIcon } from '@heroicons/react/24/outline';
-import { UserType } from '@/app/lib/definitions';
-import { updateProfile } from '@/app/lib/actions';
+import { UserType } from '@/lib/definitions';
+import { updateProfile } from '@/lib/actions';
 
 export default function Form({ user }: { user: UserType }) {
   const [state, dispatch] = useFormState(updateProfile, undefined);

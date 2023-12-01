@@ -5,7 +5,7 @@ import { LoadingSpinner } from '../skeletons';
 import { ExclamationCircleIcon } from '@heroicons/react/24/outline';
 import PathnameState from '@/app/state/pathnameState';
 import NavButton from '../navbutton';
-import { addUser } from '@/app/lib/actions';
+import { addUser } from '@/lib/actions';
 
 export default function Form() {
   const [state, dispatch] = useFormState(addUser, undefined);

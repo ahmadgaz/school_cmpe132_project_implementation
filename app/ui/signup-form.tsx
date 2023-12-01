@@ -3,7 +3,7 @@
 import { ExclamationCircleIcon } from '@heroicons/react/24/outline';
 import { ArrowRightIcon } from '@heroicons/react/20/solid';
 import { useFormState, useFormStatus } from 'react-dom';
-import { addUser } from '../lib/actions';
+import { addUser } from '@/lib/actions';
 import { useSearchParams } from 'next/navigation';
 import { LoadingSpinner } from './skeletons';
 

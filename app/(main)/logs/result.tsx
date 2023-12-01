@@ -1,4 +1,4 @@
-import { LogType } from '@/app/lib/definitions';
+import { LogType } from '@/lib/definitions';
 export default function Result({ log }: { log: LogType }) {
   return (
     <li className="border-accent-light flex h-fit min-h-[85px] items-center justify-between gap-4 border-t-[1px] pb-1 pr-6 pt-1">

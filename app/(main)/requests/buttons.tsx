@@ -1,7 +1,7 @@
 'use client';
 
-import { RequestType } from '@/app/lib/definitions';
-import { acceptRequest, denyRequest } from '@/app/lib/actions';
+import { RequestType } from '@/lib/definitions';
+import { acceptRequest, denyRequest } from '@/lib/actions';
 import React from 'react';
 import { LoadingSpinner } from '@/app/ui/skeletons';
 

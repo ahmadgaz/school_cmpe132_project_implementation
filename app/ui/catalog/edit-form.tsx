@@ -3,8 +3,8 @@
 import { useFormState, useFormStatus } from 'react-dom';
 import { LoadingSpinner } from '../skeletons';
 import { ExclamationCircleIcon } from '@heroicons/react/24/outline';
-import { BookType } from '@/app/lib/definitions';
-import { updateBook } from '@/app/lib/actions';
+import { BookType } from '@/lib/definitions';
+import { updateBook } from '@/lib/actions';
 import PathnameState from '@/app/state/pathnameState';
 import NavButton from '../navbutton';
 

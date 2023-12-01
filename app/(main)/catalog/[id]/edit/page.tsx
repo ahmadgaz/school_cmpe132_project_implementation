@@ -3,7 +3,7 @@ import React from 'react';
 import Breadcrumbs from '@/app/ui/breadcrumbs';
 import Form from '@/app/ui/catalog/edit-form';
 import { notFound } from 'next/navigation';
-import api from '@/app/lib/api';
+import api from '@/lib/api';
 import { DeleteButton } from '../../buttons';
 
 export const metadata: Metadata = {

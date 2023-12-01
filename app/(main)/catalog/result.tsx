@@ -1,6 +1,6 @@
 'use client';
 
-import { BookType, UserType } from '@/app/lib/definitions';
+import { BookType, UserType } from '@/lib/definitions';
 import { RequestButton } from './buttons';
 import { usePathname } from 'next/navigation';
 import { PendingPathnameContext } from '@/app/state/pathnameState';

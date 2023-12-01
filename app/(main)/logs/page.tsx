@@ -2,9 +2,9 @@ import Search from '@/app/ui/search';
 import { TableSkeleton } from '@/app/ui/skeletons';
 import { Metadata } from 'next';
 import React from 'react';
-import Await from '@/app/lib/utils';
-import { LogType } from '@/app/lib/definitions';
-import api from '@/app/lib/api';
+import Await from '@/lib/utils';
+import { LogType } from '@/lib/definitions';
+import api from '@/lib/api';
 import Result from './result';
 import Pagination from './pagination';
 
