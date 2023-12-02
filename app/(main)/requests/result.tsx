@@ -9,9 +9,9 @@ export default function Result({
   token?: string;
 }) {
   return (
-    <li className="border-accent-light flex h-fit min-h-[85px] items-center justify-between gap-10 border-t-[1px] pb-1 pr-6 pt-1">
+    <li className="flex h-fit min-h-[85px] items-center justify-between border-t-[1px] border-accent-light pb-1 pt-1 max-lg:flex-col max-lg:gap-6 max-lg:py-6 lg:gap-10 lg:pr-6">
       <hgroup className="flex h-fit flex-col gap-1">
-        <h1 className="text-text-gray text-[20px] font-semibold italic leading-6">
+        <h1 className="text-[20px] font-semibold italic leading-6 text-text-gray">
           {request.username} would like to{' '}
           {request.requestname === 'REQUEST_BOOK' ? 'borrow' : 'return'}{' '}
           {request.booktitle}

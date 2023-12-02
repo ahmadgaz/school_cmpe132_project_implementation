@@ -195,6 +195,26 @@ async function createBooks(client) {
 
     console.log(`Created "books" table`);
 
+    const books = await fetch(
+      'https://openlibrary.org/search.json?author=tolkien&sort=new',
+    )
+      .then((res) => res.json())
+      .then((data) =>
+        data.docs.map((book) => ({
+          title: book.title,
+          author: book.author_name[0],
+        })),
+      );
+
+    const insertedBooks = await Promise.all(
+      books.map(async (book) => {
+        return client.sql`
+            INSERT INTO books (title, author)
+            VALUES (${book.title}, ${book.author})
+          `;
+      }),
+    );
+
     return {
       createTable,
     };

@@ -13,22 +13,22 @@
     -webkit-text-fill-color: transparent;
   }
   .button-primary {
-    @apply animation text-background-light bg-primary-900  disabled:bg-primary-200 disabled:text-primary-500 hover:bg-primary-200 hover:text-primary-900 active:text-primary-300 flex h-[40px] items-center justify-center gap-2 rounded-xl px-5 text-[16px] font-bold;
+    @apply animation flex h-[40px]  items-center justify-center gap-2 rounded-xl bg-primary-900 px-5 text-[16px] font-bold text-background-light hover:bg-primary-200 hover:text-primary-900 active:text-primary-300 disabled:bg-primary-200 disabled:text-primary-500 max-lg:text-[14px];
   }
   .button-secondary {
-    @apply animation text-primary-900 border-accent-light hover:bg-primary-200 hover:text-primary-900 active:text-primary-300 flex h-[40px] items-center justify-center gap-2 rounded-xl border-[1px] px-5 text-[16px] font-bold hover:border-transparent active:border-transparent;
+    @apply animation flex h-[40px] items-center justify-center gap-2 rounded-xl border-[1px] border-accent-light px-5 text-[16px] font-bold text-primary-900 hover:border-transparent hover:bg-primary-200 hover:text-primary-900 active:border-transparent active:text-primary-300 max-lg:text-[14px];
   }
   .button-tertiary {
-    @apply animation text-background-light bg-text-black hover:text-background-light flex h-[40px] items-center justify-center gap-2 rounded-xl px-5 text-[16px] font-bold hover:bg-slate-500 active:border-transparent active:bg-slate-300;
+    @apply animation flex h-[40px] items-center justify-center gap-2 rounded-xl bg-text-black px-5 text-[16px] font-bold text-background-light hover:bg-slate-500 hover:text-background-light active:border-transparent active:bg-slate-300 max-lg:text-[14px];
   }
   .button-danger {
-    @apply animation text-background-light bg-danger-light hover:text-background-light flex h-[40px] items-center justify-center gap-2 rounded-xl px-5 text-[16px] font-bold hover:opacity-80 active:border-transparent active:opacity-30;
+    @apply animation flex h-[40px] items-center justify-center gap-2 rounded-xl bg-danger-light px-5 text-[16px] font-bold text-background-light hover:text-background-light hover:opacity-80 active:border-transparent active:opacity-30 max-lg:text-[14px];
   }
   .input {
-    @apply placeholder:text-text-gray bg-input-light block w-full rounded-xl py-[9px] pl-4 text-sm outline-2;
+    @apply block w-full rounded-xl bg-input-light py-[9px] pl-4 text-sm outline-2 placeholder:text-text-gray;
   }
   .label {
-    @apply text-text-gray mt-5 block pb-3 text-xs font-medium;
+    @apply mt-5 block pb-3 text-xs font-medium text-text-gray;
   }
   .max-width {
     @apply w-full max-w-[1048px];

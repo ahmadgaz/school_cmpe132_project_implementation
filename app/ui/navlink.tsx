@@ -36,7 +36,7 @@ export default function NavLink({
       href={href}
       onClick={() => setPendingPathname(href)}
       className={clsx(
-        'animation flex h-full grow items-center justify-center border-b-[3px] px-2 text-[16px] font-bold',
+        'animation flex h-full grow items-center justify-center px-2 text-[16px] font-bold lg:border-b-[3px]',
         {
           'border-primary-900': pathnameLoaded,
           'border-transparent': !pathnameLoaded,
@@ -45,10 +45,11 @@ export default function NavLink({
     >
       <p
         className={clsx(
-          'animation text-text-black hover:bg-primary-200 hover:text-primary-900 active:text-primary-300 block rounded-lg px-3 py-1',
+          'animation block rounded-lg px-3 py-1 text-text-black hover:bg-primary-200 hover:text-primary-900 active:text-primary-300',
           {
-            'text-primary-300 bg-primary-100 animate-pulse':
+            'animate-pulse bg-primary-100 text-primary-300':
               pendingPathname === href && !pathnameLoaded,
+            'max-lg:bg-primary-300': pathnameLoaded,
           },
         )}
       >

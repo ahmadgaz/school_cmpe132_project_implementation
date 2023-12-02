@@ -11,12 +11,12 @@ export default function Result({
   token?: string;
 }) {
   return (
-    <li className="border-accent-light flex h-fit min-h-[85px] items-center justify-between gap-4 border-t-[1px] pb-1 pr-6 pt-1">
+    <li className="flex h-fit min-h-[85px] w-full items-center justify-between gap-4 border-t-[1px] border-accent-light pb-1 pr-6 pt-1">
       <hgroup className="flex h-fit flex-col gap-1">
-        <h1 className="text-text-black text-[24px] font-semibold leading-6">
+        <h1 className="text-[24px] font-semibold leading-6 text-text-black">
           {book.title}
         </h1>
-        <p className="text-text-gray text-[12px] font-semibold">
+        <p className="text-[12px] font-semibold text-text-gray">
           by {book.author}
         </p>
       </hgroup>

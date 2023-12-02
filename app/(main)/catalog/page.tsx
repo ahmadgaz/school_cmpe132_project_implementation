@@ -50,10 +50,10 @@ export default async function Page({
         </div>
       </header>
 
-      {/* Results */}
+      {/* Desktop */}
       <section
         key={Math.random()}
-        className="max-width flex items-center justify-between gap-40 rounded-[32px] border-[1px] border-accent-light px-[84px] py-[56px]"
+        className="max-width flex items-center justify-between gap-40 rounded-[32px] border-[1px] border-accent-light px-[84px] py-[56px] max-lg:hidden"
       >
         <div className="flex w-full flex-col gap-6 border-b-[1px] border-accent-light max-lg:items-center">
           <React.Suspense fallback={<TableSkeleton />}>
@@ -73,8 +73,8 @@ export default async function Page({
                     ))}
                   </PathnameState>
                   {!catalog?.books.length && (
-                    <li className="flex h-[85px] flex-col justify-center gap-1 pt-3">
-                      <h1 className="h-8 text-center text-[24px] font-semibold italic text-text-gray">
+                    <li className="flex h-fit flex-col justify-center gap-1 pt-3">
+                      <h1 className="h-fit pb-4 text-center text-[24px] font-semibold italic text-text-gray">
                         Sorry, no books to show {':('}
                       </h1>
                     </li>
@@ -85,6 +85,37 @@ export default async function Page({
           </React.Suspense>
         </div>
       </section>
+
+      {/* Mobile */}
+      <div className="flex w-full flex-col gap-6 border-b-[1px] border-accent-light max-lg:items-center lg:hidden">
+        <React.Suspense fallback={<TableSkeleton />}>
+          <Await promise={promise}>
+            {(catalog) => (
+              <ul className="w-11/12">
+                <PathnameState>
+                  {catalog?.books.map((book, i) => (
+                    <Result
+                      key={i}
+                      href={`/catalog/${book.id}/edit`}
+                      book={book}
+                      user={catalog?.user}
+                      token={token}
+                      role={role}
+                    />
+                  ))}
+                </PathnameState>
+                {!catalog?.books.length && (
+                  <li className="flex h-fit flex-col justify-center gap-1 pt-3">
+                    <h1 className="h-fit pb-4 text-center text-[24px] font-semibold italic text-text-gray">
+                      Sorry, no books to show {':('}
+                    </h1>
+                  </li>
+                )}
+              </ul>
+            )}
+          </Await>
+        </React.Suspense>
+      </div>
 
       {/* Pagination */}
       <footer className="max-width flex items-center justify-center max-lg:justify-center">

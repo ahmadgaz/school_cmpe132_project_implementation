@@ -35,7 +35,7 @@ export default async function Page({
       <header className="max-width flex items-center justify-between gap-40 pt-6 max-lg:justify-center">
         <div className="flex w-full flex-col gap-5 ">
           <div className="flex justify-between">
-            <h1 className="text-text-black text-[28px] font-semibold max-lg:text-center">
+            <h1 className="text-[28px] font-semibold text-text-black max-lg:text-center">
               Users
             </h1>
             <PathnameState>
@@ -50,12 +50,12 @@ export default async function Page({
         </div>
       </header>
 
-      {/* Results */}
+      {/* Desktop */}
       <section
         key={Math.random()}
-        className="border-accent-light max-width flex items-center justify-between gap-40 rounded-[32px] border-[1px] px-[84px] py-[56px]"
+        className="max-width flex items-center justify-between gap-40 rounded-[32px] border-[1px] border-accent-light px-[84px] py-[56px] max-lg:hidden"
       >
-        <div className="border-accent-light flex w-full flex-col gap-6 border-b-[1px] max-lg:items-center">
+        <div className="flex w-full flex-col gap-6 border-b-[1px] border-accent-light max-lg:items-center">
           <React.Suspense fallback={<TableSkeleton />}>
             <Await promise={promise}>
               {(users) => (
@@ -70,8 +70,8 @@ export default async function Page({
                     ))}
                   </PathnameState>
                   {!users?.users?.length && (
-                    <li className="flex h-[85px] flex-col justify-center gap-1 pt-3">
-                      <h1 className="text-text-gray h-8 text-center text-[24px] font-semibold italic">
+                    <li className="flex h-fit flex-col justify-center gap-1 pt-3">
+                      <h1 className="h-fit pb-4 text-center text-[24px] font-semibold italic text-text-gray">
                         There are no other users in the database.
                       </h1>
                     </li>
@@ -82,6 +82,34 @@ export default async function Page({
           </React.Suspense>
         </div>
       </section>
+
+      {/* Mobile */}
+      <div className="flex w-full  flex-col gap-6 border-b-[1px] border-accent-light max-lg:items-center lg:hidden">
+        <React.Suspense fallback={<TableSkeleton />}>
+          <Await promise={promise}>
+            {(users) => (
+              <ul className="w-11/12">
+                <PathnameState>
+                  {users?.users?.map((user, i) => (
+                    <Result
+                      key={i}
+                      href={`/users/${user.id}/edit`}
+                      user={user}
+                    />
+                  ))}
+                </PathnameState>
+                {!users?.users?.length && (
+                  <li className="flex h-fit flex-col justify-center gap-1 pt-3">
+                    <h1 className="h-fit pb-4 text-center text-[24px] font-semibold italic text-text-gray">
+                      There are no other users in the database.
+                    </h1>
+                  </li>
+                )}
+              </ul>
+            )}
+          </Await>
+        </React.Suspense>
+      </div>
 
       {/* Pagination */}
       <footer className="max-width flex items-center justify-center max-lg:justify-center">

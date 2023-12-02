@@ -26,14 +26,14 @@ export default function Page() {
       </div>
 
       {/* Content */}
-      <section className="border-accent-light max-width flex items-center justify-between gap-40 rounded-[32px] border-[1px] bg-[#FFFAF4AA] px-[84px] py-[56px] backdrop-blur">
+      <section className="max-width flex items-center gap-40 rounded-[32px] border-[1px] border-accent-light bg-[#FFFAF4AA] px-[84px] py-[56px] backdrop-blur max-lg:justify-center max-lg:px-[64px] max-lg:py-[56px] lg:justify-between">
         <div className="flex flex-col gap-6 max-lg:items-center">
           <hgroup className="flex flex-col gap-2">
-            <h1 className="text-text-black text-[48px] font-semibold leading-[50px] tracking-tight max-lg:text-center">
+            <h1 className="text-[48px] font-semibold leading-[50px] tracking-tight text-text-black max-lg:text-center max-lg:text-[36px] max-lg:leading-[40px]">
               The <span className="logo-color font-bold">SJSUL</span> Management
               System.
             </h1>
-            <h2 className="text-text-gray text-[16px] font-bold tracking-tight max-lg:text-center">
+            <h2 className="text-[16px] font-bold tracking-tight text-text-gray max-lg:text-center max-lg:text-[14px]">
               Embark on your next academic journey.
             </h2>
           </hgroup>
@@ -57,10 +57,10 @@ export default function Page() {
       <section className="max-width flex items-center justify-between gap-40 px-[84px] py-[56px] max-lg:justify-center">
         <div className="flex flex-col gap-6 max-lg:items-center">
           <hgroup className="flex flex-col gap-2">
-            <h1 className="text-text-black text-[48px] font-semibold leading-[50px] tracking-tight max-lg:text-center">
+            <h1 className="text-[48px] font-semibold leading-[50px] tracking-tight text-text-black max-lg:text-center max-lg:text-[36px]">
               Manage your books easily
             </h1>
-            <h2 className="text-text-gray text-[16px] font-bold tracking-tight max-lg:text-center">
+            <h2 className="text-[16px] font-bold tracking-tight text-text-gray max-lg:text-center max-lg:text-[14px]">
               Keep track of your all your books.
             </h2>
           </hgroup>
