@@ -76,7 +76,7 @@ function PaginationNumber({
   isActive: boolean;
 }) {
   const className = clsx(
-    'flex max-lg:h-6 max-lg:w-6 lg:h-10 lg:w-10 items-center justify-center max-lg:text-xs lg:text-sm border animation',
+    'flex max-lg:h-6 max-lg:min-w-[24px] w-fit px-1 lg:h-10 lg:min-w-[40px] items-center justify-center max-lg:text-xs lg:text-sm border animation',
     {
       'rounded-l-md': position === 'first' || position === 'single',
       'rounded-r-md': position === 'last' || position === 'single',
