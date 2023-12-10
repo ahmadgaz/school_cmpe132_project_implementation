@@ -1,38 +1,9 @@
 import Link from 'next/link';
-import NavLink from '@/app/ui/navlink';
 import Logo from '@/app/ui/logo';
 import PathnameState from '../state/pathnameState';
-import NavButton from './navbutton';
 import api from '@/lib/api';
 import NavDropdown from './navdropdown';
-
-const links = [
-  { name: 'Log in', href: '/login' },
-  { name: 'Sign up', href: '/signup' },
-  { name: 'Sign out', href: '/signout' },
-  { name: 'Home', href: '/' },
-  { name: 'Books', href: '/books' },
-  {
-    name: 'Catalog',
-    href: '/catalog',
-  },
-  {
-    name: 'Profile',
-    href: '/profile',
-  },
-  {
-    name: 'Users',
-    href: '/users',
-  },
-  {
-    name: 'Requests',
-    href: '/requests',
-  },
-  {
-    name: 'Logs',
-    href: '/logs',
-  },
-];
+import NavLinks from './navlinks';
 
 export default async function Navbar({ token }: { token?: string }) {
   const role = await api.fetchRole(token);
@@ -46,76 +17,7 @@ export default async function Navbar({ token }: { token?: string }) {
 
         <ul className="flex h-full items-center max-lg:h-14">
           <PathnameState>
-            {role === 'GUEST' && (
-              <>
-                <li className="flex h-full items-center">
-                  <NavLink name={links[3].name} href={links[3].href} />
-                </li>
-                <li className="flex h-full items-center">
-                  <NavLink name={links[5].name} href={links[5].href} />
-                </li>
-                <li className="flex h-full items-center px-2">
-                  <NavButton
-                    className="button-primary w-fit"
-                    name={links[0].name}
-                    href={links[0].href}
-                  />
-                </li>
-                <li className="flex h-full items-center px-2">
-                  <NavButton
-                    className="button-primary w-fit"
-                    name={links[1].name}
-                    href={links[1].href}
-                  />
-                </li>
-              </>
-            )}
-            {role == 'USER' && (
-              <>
-                <li className="flex h-full items-center">
-                  <NavLink name={links[4].name} href={links[4].href} />
-                </li>
-                <li className="flex h-full items-center">
-                  <NavLink name={links[5].name} href={links[5].href} />
-                </li>
-                <li className="flex h-full items-center">
-                  <NavLink name={links[6].name} href={links[6].href} />
-                </li>
-                <li className="flex h-full items-center px-2">
-                  <NavButton
-                    className="button-secondary w-fit"
-                    name={links[2].name}
-                    href={links[2].href}
-                  />
-                </li>
-              </>
-            )}
-            {role == 'ADMIN' && (
-              <>
-                <li className="flex h-full items-center">
-                  <NavLink name={links[4].name} href={links[4].href} />
-                </li>
-                <li className="flex h-full items-center">
-                  <NavLink name={links[5].name} href={links[5].href} />
-                </li>
-                <li className="flex h-full items-center">
-                  <NavLink name={links[7].name} href={links[7].href} />
-                </li>
-                <li className="flex h-full items-center">
-                  <NavLink name={links[8].name} href={links[8].href} />
-                </li>
-                <li className="flex h-full items-center">
-                  <NavLink name={links[9].name} href={links[9].href} />
-                </li>
-                <li className="flex h-full items-center px-2">
-                  <NavButton
-                    className="button-secondary w-fit"
-                    name={links[2].name}
-                    href={links[2].href}
-                  />
-                </li>
-              </>
-            )}
+            <NavLinks role={role} />
           </PathnameState>
         </ul>
       </nav>
@@ -124,78 +26,7 @@ export default async function Navbar({ token }: { token?: string }) {
         <PathnameState>
           <NavDropdown>
             <ul className="flex h-fit flex-col items-center gap-8">
-              {role === 'GUEST' && (
-                <>
-                  <ul className="flex">
-                    <li className="flex h-fit items-center px-2">
-                      <NavButton
-                        className="button-primary w-fit"
-                        name={links[0].name}
-                        href={links[0].href}
-                      />
-                    </li>
-                    <li className="flex h-fit items-center px-2">
-                      <NavButton
-                        className="button-primary w-fit"
-                        name={links[1].name}
-                        href={links[1].href}
-                      />
-                    </li>
-                  </ul>
-                  <li className="flex h-fit items-center">
-                    <NavLink name={links[3].name} href={links[3].href} />
-                  </li>
-                  <li className="flex h-fit items-center">
-                    <NavLink name={links[5].name} href={links[5].href} />
-                  </li>
-                </>
-              )}
-              {role == 'USER' && (
-                <>
-                  <li className="flex h-fit items-center px-2">
-                    <NavButton
-                      className="button-secondary w-fit"
-                      name={links[2].name}
-                      href={links[2].href}
-                    />
-                  </li>
-                  <li className="flex h-fit items-center">
-                    <NavLink name={links[4].name} href={links[4].href} />
-                  </li>
-                  <li className="flex h-fit items-center">
-                    <NavLink name={links[5].name} href={links[5].href} />
-                  </li>
-                  <li className="flex h-fit items-center">
-                    <NavLink name={links[6].name} href={links[6].href} />
-                  </li>
-                </>
-              )}
-              {role == 'ADMIN' && (
-                <>
-                  <li className="flex h-fit items-center px-2">
-                    <NavButton
-                      className="button-secondary w-fit"
-                      name={links[2].name}
-                      href={links[2].href}
-                    />
-                  </li>
-                  <li className="flex h-fit items-center">
-                    <NavLink name={links[4].name} href={links[4].href} />
-                  </li>
-                  <li className="flex h-fit items-center">
-                    <NavLink name={links[5].name} href={links[5].href} />
-                  </li>
-                  <li className="flex h-fit items-center">
-                    <NavLink name={links[7].name} href={links[7].href} />
-                  </li>
-                  <li className="flex h-fit items-center">
-                    <NavLink name={links[8].name} href={links[8].href} />
-                  </li>
-                  <li className="flex h-fit items-center">
-                    <NavLink name={links[9].name} href={links[9].href} />
-                  </li>
-                </>
-              )}
+              <NavLinks role={role} />
             </ul>
           </NavDropdown>
         </PathnameState>

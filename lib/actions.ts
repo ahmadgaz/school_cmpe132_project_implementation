@@ -18,7 +18,18 @@ type NeonDbError = {
 
 const UserAuthSchema = z.object({
   id: z.string().uuid(),
-  username: z.string().min(1).max(255),
+  username: z
+    .string()
+    .min(3, {
+      message: 'Username too short.',
+    })
+    .max(64, {
+      message: 'Username too long.',
+    })
+    .regex(/^[A-Za-z0-9_.]+$/, {
+      message:
+        'Username can only contain letters, numbers, underscores, and periods.',
+    }),
   password: z.string().min(1).max(255),
   role: z.union([z.literal('USER'), z.literal('ADMIN')]),
 });

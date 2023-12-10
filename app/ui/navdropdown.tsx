@@ -19,10 +19,11 @@ export default function NavDropdown({
   const { pendingPathname } = React.useContext(PendingPathnameContext);
   const [isOpen, setIsOpen] = React.useState(false);
 
+  // On navigation, this allows navdropdown to wait for the new page to load before closing.
+  // Haven't found a better way to do this yet.
   React.useEffect(() => {
-    console.log(isOpen, pendingPathname, pathname);
     if (pendingPathname === pathname && isOpen) setIsOpen(false);
-  }, [pathname]);
+  }, [pathname]); // eslint-disable-line react-hooks/exhaustive-deps
 
   return (
     <div
@@ -37,22 +38,13 @@ export default function NavDropdown({
         <Link className="min-h-[50px] w-fit" href="/">
           <Logo />
         </Link>
-        {!isOpen && (
-          <button
-            onClick={() => setIsOpen(!isOpen)}
-            className="button-secondary h-fit min-h-fit px-0 py-0"
-          >
-            <ChevronDownIcon className="h-8 w-8" />
-          </button>
-        )}
-        {isOpen && (
-          <button
-            onClick={() => setIsOpen(!isOpen)}
-            className="button-secondary h-fit min-h-fit px-0 py-0"
-          >
-            <ChevronUpIcon className="h-8 w-8" />
-          </button>
-        )}
+        <button
+          onClick={() => setIsOpen(!isOpen)}
+          className="button-secondary h-fit min-h-fit rounded-full border-0 px-0 py-0"
+        >
+          {!isOpen && <ChevronDownIcon className="h-8 w-8" />}
+          {isOpen && <ChevronUpIcon className="h-8 w-8" />}
+        </button>
       </div>
       {children}
     </div>
